@@ -91,7 +91,7 @@ namespace Codenet.Text
         /// </summary>
         /// <returns></returns>
         public static void Split(
-            string source, char[] separator,
+            this string source, char[] separator,
             out string[] arrStrings, out string[] arrWhitespace)
         {
             if ((source.Length == 0))
@@ -221,7 +221,7 @@ namespace Codenet.Text
             }
         }
 
-        public static string[] SplitWithEscape(string source, char separator, char escape)
+        public static string[] SplitWithEscape(this string source, char separator, char escape)
         {
             if (source.Length == 0)
                 return new string[0];
@@ -261,6 +261,5 @@ namespace Codenet.Text
             if (sb.Length > 0) lstString.Add(sb.ToString());
             return lstString.ToArray();
         }
-
     }
 }
