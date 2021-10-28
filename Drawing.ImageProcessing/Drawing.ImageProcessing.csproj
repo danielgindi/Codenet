@@ -61,6 +61,7 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>..\_Release\Codenet.Drawing.ImageProcessing.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="BitMiracle.LibJpeg.NET" Version="1.5.324" />
