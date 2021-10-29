@@ -23,6 +23,7 @@ Packages:
 * `Codenet.Serialization` - Serialization utilities
 * `Codenet.Text` - Text utilities and extensions
 * `Codenet.Threading` - Threading utilities
+* `Codenet.Encryption.XXTEA` - XXTEA implementation
 
 ## Me
 * Hi! I'm Daniel.
