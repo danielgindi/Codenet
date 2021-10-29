@@ -25,6 +25,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Text", "Text\Text.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO.CsvReader", "IO.CsvReader\IO.CsvReader.csproj", "{7D3779C9-5EF9-4823-85C9-9E32E63CECE1}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Encryption.XXTEA", "Encryption.XXTEA\Encryption.XXTEA.csproj", "{EBDC30AD-1EC0-41F7-8ED5-F4385FB4A91B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{7D3779C9-5EF9-4823-85C9-9E32E63CECE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D3779C9-5EF9-4823-85C9-9E32E63CECE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D3779C9-5EF9-4823-85C9-9E32E63CECE1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBDC30AD-1EC0-41F7-8ED5-F4385FB4A91B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBDC30AD-1EC0-41F7-8ED5-F4385FB4A91B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBDC30AD-1EC0-41F7-8ED5-F4385FB4A91B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBDC30AD-1EC0-41F7-8ED5-F4385FB4A91B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

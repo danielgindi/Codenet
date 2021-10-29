@@ -7,8 +7,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Codenet.Threading</RootNamespace>
-    <AssemblyName>Codenet.Threading</AssemblyName>
+    <RootNamespace>Codenet.Encryption</RootNamespace>
+    <AssemblyName>Codenet.Encryption.XXTEA</AssemblyName>
     <TargetFramework>netstandard2.0</TargetFramework>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -29,11 +29,11 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Company />
-    <Product>Codenet.Threading</Product>
+    <Product>Codenet.Encryption.XXTEA</Product>
     <Copyright>Copyright Daniel Cohen Gindi (danielgindi@gmail.com) © 2021</Copyright>
-    <PackageId>Codenet.Threading</PackageId>
+    <PackageId>Codenet.Encryption.XXTEA</PackageId>
     <Authors>Daniel Cohen Gindi</Authors>
     <RepositoryUrl>https://github.com/danielgindi/Codenet</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -48,7 +48,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -59,8 +59,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
-    <DocumentationFile>..\_Release\Codenet.Threading.xml</DocumentationFile>
+    <DocumentationFile>..\_Release\Codenet.Encryption.XXTEA.xml</DocumentationFile>
   </PropertyGroup>
 </Project>
