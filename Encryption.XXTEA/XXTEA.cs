@@ -98,7 +98,7 @@ namespace Codenet.Encryption
             if (decryptedLen == 0)
                 return EMPTY_DATA;
 
-            if (decryptedLen > decryptedBytes.Length)
+            if (decryptedLen < decryptedBytes.Length)
             {
                 var dest = new byte[decryptedLen];
                 Buffer.BlockCopy(decryptedBytes, 0, dest, 0, decryptedLen);
