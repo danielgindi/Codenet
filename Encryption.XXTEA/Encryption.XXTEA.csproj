@@ -29,7 +29,7 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Company />
     <Product>Codenet.Encryption.XXTEA</Product>
     <Copyright>Copyright Daniel Cohen Gindi (danielgindi@gmail.com) © 2021</Copyright>
