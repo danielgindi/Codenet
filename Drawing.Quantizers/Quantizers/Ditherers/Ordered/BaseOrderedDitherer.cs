@@ -2,83 +2,82 @@
 using Codenet.Drawing.Common;
 using Codenet.Drawing.Common.Helpers;
 
-namespace Codenet.Drawing.Quantizers.Ditherers.Ordered
+namespace Codenet.Drawing.Quantizers.Ditherers.Ordered;
+
+/// <summary>
+/// Provided by SmartK8 on CodeProject. http://www.codeproject.com/Articles/66341/A-Simple-Yet-Quite-Powerful-Palette-Quantizer-in-C
+/// </summary>
+public abstract class BaseOrderedDitherer : BaseColorDitherer
 {
+    #region Properties
+
     /// <summary>
-    /// Provided by SmartK8 on CodeProject. http://www.codeproject.com/Articles/66341/A-Simple-Yet-Quite-Powerful-Palette-Quantizer-in-C
+    /// Gets the width of the matrix.
     /// </summary>
-    public abstract class BaseOrderedDitherer : BaseColorDitherer
+    protected abstract Byte MatrixWidth { get; }
+
+    /// <summary>
+    /// Gets the height of the matrix.
+    /// </summary>
+    protected abstract Byte MatrixHeight { get; }
+
+    #endregion
+
+    #region BaseColorDitherer
+
+    /// <summary>
+    /// See <see cref="BaseColorDitherer.OnProcessPixel"/> for more details.
+    /// </summary>
+    protected override bool OnProcessPixel(PixelAccess sourcePixel, PixelAccess targetPixel)
     {
-        #region Properties
+        // reads the source pixel
+        NeatColor oldColor = SourceBuffer.GetColorFromPixel(sourcePixel);
 
-        /// <summary>
-        /// Gets the width of the matrix.
-        /// </summary>
-        protected abstract Byte MatrixWidth { get; }
+        // converts alpha to solid color
+        oldColor = QuantizationHelper.ConvertAlphaToSolid(oldColor);
 
-        /// <summary>
-        /// Gets the height of the matrix.
-        /// </summary>
-        protected abstract Byte MatrixHeight { get; }
+        // retrieves matrix coordinates
+        Int32 x = targetPixel.X % MatrixWidth;
+        Int32 y = targetPixel.Y % MatrixHeight;
 
-        #endregion
+        // determines the threshold
+        Int32 threshold = Convert.ToInt32(CachedMatrix[x, y]);
 
-        #region BaseColorDitherer
-
-        /// <summary>
-        /// See <see cref="BaseColorDitherer.OnProcessPixel"/> for more details.
-        /// </summary>
-        protected override bool OnProcessPixel(PixelAccess sourcePixel, PixelAccess targetPixel)
+        // only process dithering if threshold is substantial
+        if (threshold > 0)
         {
-            // reads the source pixel
-            NeatColor oldColor = SourceBuffer.GetColorFromPixel(sourcePixel);
+            byte red = GetClamped8bColorElement(oldColor.Red + threshold);
+            byte green = GetClamped8bColorElement(oldColor.Green + threshold);
+            byte blue = GetClamped8bColorElement(oldColor.Blue + threshold);
 
-            // converts alpha to solid color
-            oldColor = QuantizationHelper.ConvertAlphaToSolid(oldColor);
+            NeatColor newColor = NeatColor.FromARGB(255, red, green, blue);
 
-            // retrieves matrix coordinates
-            Int32 x = targetPixel.X % MatrixWidth;
-            Int32 y = targetPixel.Y % MatrixHeight;
-
-            // determines the threshold
-            Int32 threshold = Convert.ToInt32(CachedMatrix[x, y]);
-
-            // only process dithering if threshold is substantial
-            if (threshold > 0)
+            if (TargetBuffer.IsIndexed)
             {
-                byte red = GetClamped8bColorElement(oldColor.Red + threshold);
-                byte green = GetClamped8bColorElement(oldColor.Green + threshold);
-                byte blue = GetClamped8bColorElement(oldColor.Blue + threshold);
-
-                NeatColor newColor = NeatColor.FromARGB(255, red, green, blue);
-
-                if (TargetBuffer.IsIndexed)
-                {
-                    Byte newPixelIndex = (Byte) Quantizer.GetPaletteIndex(newColor, targetPixel.X, targetPixel.Y);
-                    targetPixel.Index = newPixelIndex;
-                }
-                else
-                {
-                    targetPixel.Color = newColor;
-                }
+                Byte newPixelIndex = (Byte) Quantizer.GetPaletteIndex(newColor, targetPixel.X, targetPixel.Y);
+                targetPixel.Index = newPixelIndex;
             }
-
-            // writes the process pixel
-            return true;
+            else
+            {
+                targetPixel.Color = newColor;
+            }
         }
 
-        #endregion
-
-        #region IColorDitherer
-
-        /// <summary>
-        /// See <see cref="IColorDitherer.IsInplace"/> for more details.
-        /// </summary>
-        public override Boolean IsInplace
-        {
-            get { return true; }
-        }
-
-        #endregion
+        // writes the process pixel
+        return true;
     }
+
+    #endregion
+
+    #region IColorDitherer
+
+    /// <summary>
+    /// See <see cref="IColorDitherer.IsInplace"/> for more details.
+    /// </summary>
+    public override Boolean IsInplace
+    {
+        get { return true; }
+    }
+
+    #endregion
 }

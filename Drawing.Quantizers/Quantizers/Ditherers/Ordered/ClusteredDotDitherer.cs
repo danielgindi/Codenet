@@ -1,40 +1,39 @@
 ﻿using System;
 
-namespace Codenet.Drawing.Quantizers.Ditherers.Ordered
+namespace Codenet.Drawing.Quantizers.Ditherers.Ordered;
+
+/// <summary>
+/// Provided by SmartK8 on CodeProject. http://www.codeproject.com/Articles/66341/A-Simple-Yet-Quite-Powerful-Palette-Quantizer-in-C
+/// </summary>
+public class ClusteredDotDitherer : BaseOrderedDitherer
 {
     /// <summary>
-    /// Provided by SmartK8 on CodeProject. http://www.codeproject.com/Articles/66341/A-Simple-Yet-Quite-Powerful-Palette-Quantizer-in-C
+    /// See <see cref="BaseColorDitherer.CreateCoeficientMatrix"/> for more details.
     /// </summary>
-    public class ClusteredDotDitherer : BaseOrderedDitherer
+    protected override Byte[,] CreateCoeficientMatrix()
     {
-        /// <summary>
-        /// See <see cref="BaseColorDitherer.CreateCoeficientMatrix"/> for more details.
-        /// </summary>
-        protected override Byte[,] CreateCoeficientMatrix()
+        return new Byte[,] 
         {
-            return new Byte[,] 
-            {
-        		{ 13,  5, 12, 16 },
+    		{ 13,  5, 12, 16 },
 			    {  6,  0,  4, 11 },
 			    {  7,  2,  3, 10 },
 			    { 14,  8,  9, 15 }
-            };
-        }
+        };
+    }
 
-        /// <summary>
-        /// See <see cref="BaseOrderedDitherer.MatrixWidth"/> for more details.
-        /// </summary>
-        protected override Byte MatrixWidth
-        {
-            get { return 4; }
-        }
+    /// <summary>
+    /// See <see cref="BaseOrderedDitherer.MatrixWidth"/> for more details.
+    /// </summary>
+    protected override Byte MatrixWidth
+    {
+        get { return 4; }
+    }
 
-        /// <summary>
-        /// See <see cref="BaseOrderedDitherer.MatrixHeight"/> for more details.
-        /// </summary>
-        protected override Byte MatrixHeight
-        {
-            get { return 4; }
-        }
+    /// <summary>
+    /// See <see cref="BaseOrderedDitherer.MatrixHeight"/> for more details.
+    /// </summary>
+    protected override Byte MatrixHeight
+    {
+        get { return 4; }
     }
 }

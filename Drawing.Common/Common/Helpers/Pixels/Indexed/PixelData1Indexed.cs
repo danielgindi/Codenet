@@ -1,33 +1,32 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Codenet.Drawing.Common.Helpers.Pixels.Indexed
+namespace Codenet.Drawing.Common.Helpers.Pixels.Indexed;
+
+[StructLayout(LayoutKind.Sequential, Size = 1)]
+internal struct PixelData1Indexed : IIndexedPixel
 {
-    [StructLayout(LayoutKind.Sequential, Size = 1)]
-    internal struct PixelData1Indexed : IIndexedPixel
+    // raw component values
+    private Byte index;
+
+    // get - index method
+    public Byte GetIndex(Int32 offset)
     {
-        // raw component values
-        private Byte index;
+        return (index & 1 << (7 - offset)) != 0 ? PixelAccess.One : PixelAccess.Zero;
+    }
 
-        // get - index method
-        public Byte GetIndex(Int32 offset)
+    // set - index method
+    public void SetIndex(Int32 offset, Byte value)
+    {
+        value = value == 0 ? PixelAccess.One : PixelAccess.Zero;
+
+        if (value == 0)
         {
-            return (index & 1 << (7 - offset)) != 0 ? PixelAccess.One : PixelAccess.Zero;
+            index |= (Byte) (1 << (7 - offset));
         }
-
-        // set - index method
-        public void SetIndex(Int32 offset, Byte value)
+        else
         {
-            value = value == 0 ? PixelAccess.One : PixelAccess.Zero;
-
-            if (value == 0)
-            {
-                index |= (Byte) (1 << (7 - offset));
-            }
-            else
-            {
-                index &= (Byte) (~(1 << (7 - offset)));
-            }
+            index &= (Byte) (~(1 << (7 - offset)));
         }
     }
 }
