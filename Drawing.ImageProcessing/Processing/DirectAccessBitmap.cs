@@ -53,7 +53,7 @@ namespace Codenet.Drawing.ImageProcessing.Processing
         /// </summary>
         /// <param name="width">width of the new bitmap</param>
         /// <param name="height">height of the new bitmap</param>
-        /// <param name="format">pixel format of the new bitmap</param>
+        /// <param name="pixelFormat">pixel format of the new bitmap</param>
         public DirectAccessBitmap(int width, int height, PixelFormat pixelFormat)
         {
             if ((pixelFormat & PixelFormat.Indexed) == PixelFormat.Indexed)

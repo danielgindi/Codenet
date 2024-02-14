@@ -67,7 +67,6 @@
     <DocumentationFile>..\_Release\Codenet.Drawing.ImageProcessing.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="BitMiracle.LibJpeg.NET" Version="1.5.324" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
   </ItemGroup>
   <ItemGroup>

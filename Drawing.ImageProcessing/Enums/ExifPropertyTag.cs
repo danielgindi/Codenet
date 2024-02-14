@@ -1528,7 +1528,7 @@
         /// </summary>
         PropertyTagThumbnailResolutionY = 0x502D,
 
-        /// </summary>
+        /// <summary>
         /// Number of rows per strip in the thumbnail image. See also PropertyTagThumbnailStripBytesCount and PropertyTagThumbnailStripOffsets.
         ///  
         ///  PropertyTagTypeShort or PropertyTagTypeLong * 1

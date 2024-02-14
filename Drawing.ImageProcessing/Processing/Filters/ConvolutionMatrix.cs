@@ -396,7 +396,7 @@ namespace Codenet.Drawing.ImageProcessing.Processing.Filters
             int bPos;
             int startX = bmp.StartX, startY = bmp.StartY;
             int x, y, mx, my, c;
-            float fValue = 0f;
+            float fValue;
 
             int Size = kernel.Size;
             int HalfSize = kernel.HalfSize;
@@ -438,7 +438,6 @@ namespace Codenet.Drawing.ImageProcessing.Processing.Filters
             }
             int[][][] channelsOffsets = lstChannelsOffsets.ToArray();
             int[][] curChannel;
-            Channel[] channelIds = lstChannelIds.ToArray();
             int countChannels = channelsOffsets.Length;
 
             for (y = startYY; y < endYY; y++)
@@ -529,7 +528,7 @@ namespace Codenet.Drawing.ImageProcessing.Processing.Filters
             int bPos;
             int startX = bmp.StartX, startY = bmp.StartY;
             int x, y, mx, my, c;
-            float fValue = 0f, alphaSum = 0f;
+            float fValue, alphaSum;
             float temp;
             float matrixSum = kernel.Sum();
 

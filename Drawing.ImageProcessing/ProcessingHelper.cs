@@ -5,7 +5,6 @@ using Codenet.Drawing.Encoders;
 using Codenet.Drawing.Common;
 using Codenet.Drawing.Quantizers.XiaolinWu;
 using Codenet.Drawing.Quantizers.Quantizers;
-using Codenet.Drawing.Quantizers;
 using Codenet.Drawing.Quantizers.Helpers;
 
 namespace Codenet.Drawing.ImageProcessing

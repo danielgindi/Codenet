@@ -286,12 +286,12 @@ namespace Codenet.Drawing.ImageProcessing
                             gProcessed.PixelOffsetMode = PixelOffsetMode.HighQuality;
                             gProcessed.CompositingQuality = CompositingQuality.HighQuality;
 
-                                // Fill background if we are not intending to do that later on
-                                if (!processBorderAndCorners) gProcessed.Clear(backgroundColor);
+                            // Fill background if we are not intending to do that later on
+                            if (!processBorderAndCorners) gProcessed.Clear(backgroundColor);
                             else gProcessed.Clear(FixTransparentBgColor(Color.Transparent, destinationFormat));
 
-                                // Draw the final image in the correct position inside the final box
-                                gProcessed.DrawImage(frame, xDrawPos, yDrawPos, szResizedImage.Width, szResizedImage.Height);
+                            // Draw the final image in the correct position inside the final box
+                            gProcessed.DrawImage(frame, xDrawPos, yDrawPos, szResizedImage.Width, szResizedImage.Height);
 
                             if (processBorderAndCorners)
                             {
@@ -364,7 +364,7 @@ namespace Codenet.Drawing.ImageProcessing
         /// <param name="imageData">Image object to save</param>
         /// <param name="imagePath">Destination local path</param>
         /// <param name="imageFormat">Image format to use</param>
-        /// <param name="jpegQuality">Quality to use in case of a jpeg format (0.0 - 1.0)</param>
+        /// <param name="encodingOptions">Encoding options, including quality</param>
         public static void SaveImage(Image imageData, string imagePath, ImageFormat imageFormat, ProcessingHelper.EncodingOptions encodingOptions)
         {
             if (encodingOptions.JpegQuality <= 0.0f)
@@ -504,48 +504,6 @@ namespace Codenet.Drawing.ImageProcessing
             }
         }
 
-        public static string MimeTypeForFormat(ImageFormat imageFormat)
-        {
-            if (imageFormat.Equals(ImageFormat.Jpeg))
-            {
-                return "image/jpeg";
-            }
-            else if (imageFormat.Equals(ImageFormat.Png))
-            {
-                return "image/png";
-            }
-            else if (imageFormat.Equals(ImageFormat.Gif))
-            {
-                return "image/gif";
-            }
-            else if (imageFormat.Equals(ImageFormat.Bmp))
-            {
-                return "image/bmp";
-            }
-            else if (imageFormat.Equals(ImageFormat.Emf))
-            {
-                return "image/x-emf";
-            }
-            else if (imageFormat.Equals(ImageFormat.Exif))
-            {
-                return "image/x-exif";
-            }
-            else if (imageFormat.Equals(ImageFormat.Icon))
-            {
-                return "image/x-icon";
-            }
-            else if (imageFormat.Equals(ImageFormat.Tiff))
-            {
-                return "image/tiff";
-            }
-            else if (imageFormat.Equals(ImageFormat.Wmf))
-            {
-                return "image/x-wmf";
-            }
-
-            return "image/x-unknown";
-        }
-
         private static ProcessingHelper.EncodingOptions EncodingOptionsWithQualityBasedOnSize(int width, int height)
         {
             var encodingOptions = new ProcessingHelper.EncodingOptions();
@@ -562,5 +520,4 @@ namespace Codenet.Drawing.ImageProcessing
             return encodingOptions;
         }
     }
-
 }

@@ -18,5 +18,4 @@
         public const float SimpleGreen = 1.0f / 3.0f;
         public const float SimpleBlue = 1.0f / 3.0f;
     }
-
 }

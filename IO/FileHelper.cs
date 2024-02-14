@@ -128,7 +128,7 @@ namespace Codenet.IO
                 }
                 catch (IOException ioex)
                 {
-                    Console.WriteLine($"Utility.File.CreateEmptyTempFile - Error: {ioex}");
+                    Console.WriteLine($"Codenet.IO.FileHelper.CreateEmptyTempFile - Error: {ioex}");
                     if (File.Exists(tempFilePath))
                     { // File exists, make up another name
                         tempFilePath = FolderHelper.GetTempDir() + Guid.NewGuid().ToString() + ".tmp";
@@ -140,7 +140,7 @@ namespace Codenet.IO
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Utility.File.CreateEmptyTempFile - Error: {ex}");
+                    Console.WriteLine($"Codenet.IO.FileHelper.CreateEmptyTempFile - Error: {ex}");
                     break;
                 }
             }
