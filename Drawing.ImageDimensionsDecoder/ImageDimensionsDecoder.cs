@@ -8,42 +8,42 @@ namespace Codenet.Drawing
 {
     public static class ImageDimensionsDecoder
     {
-        private static byte[] JPEG_HEADER = new byte[] { 0xff, 0xd8 };
-        private static byte[] JPEG_EXIF_HEADER = new byte[] { (byte)'E', (byte)'x', (byte)'i', (byte)'f' };
-        private static byte[] PNG_HEADER = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
-        private static byte[] GIF_HEADER = new byte[] { (byte)'G', (byte)'I', (byte)'F' };
-        private static byte[] BMP_HEADER = new byte[] { 0x42, 0x4D };
-        private static byte[] ICNS_HEADER = new byte[] { (byte)'i', (byte)'c', (byte)'n', (byte)'s' };
+        private readonly static byte[] JPEG_HEADER = new byte[] { 0xff, 0xd8 };
+        private readonly static byte[] JPEG_EXIF_HEADER = new byte[] { (byte)'E', (byte)'x', (byte)'i', (byte)'f' };
+        private readonly static byte[] PNG_HEADER = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+        private readonly static byte[] GIF_HEADER = new byte[] { (byte)'G', (byte)'I', (byte)'F' };
+        private readonly static byte[] BMP_HEADER = new byte[] { 0x42, 0x4D };
+        private readonly static byte[] ICNS_HEADER = new byte[] { (byte)'i', (byte)'c', (byte)'n', (byte)'s' };
 
         private const UInt16 EXIF_TAGTYPE_BYTE = 1;		// BYTE	    8-bit unsigned integer
-        private const UInt16 EXIF_TAGTYPE_SHORT = 3;		// SHORT    16-bit unsigned integer
+        private const UInt16 EXIF_TAGTYPE_SHORT = 3;	// SHORT    16-bit unsigned integer
         private const UInt16 EXIF_TAGTYPE_LONG = 4;		// LONG     32-bit unsigned integer
-        private const UInt16 EXIF_TAGTYPE_SBYTE = 6;		// SBYTE    8-bit signed integer
-        private const UInt16 EXIF_TAGTYPE_SSHORT = 8;		// SSHORT   16-bit signed integer
-        private const UInt16 EXIF_TAGTYPE_SLONG = 9;		// SLONG    32-bit signed integer
+        private const UInt16 EXIF_TAGTYPE_SBYTE = 6;	// SBYTE    8-bit signed integer
+        private const UInt16 EXIF_TAGTYPE_SSHORT = 8;	// SSHORT   16-bit signed integer
+        private const UInt16 EXIF_TAGTYPE_SLONG = 9;	// SLONG    32-bit signed integer
 
-        private static ImageSize GetImageSize_EXIF(FileStream stream)
+        private static ImageSize? GetImageSize_EXIF(FileStream stream)
         {
             byte[] buffer = new byte[4];
 
             long offset = stream.Position;
 
             // Read Byte alignment
-            if (stream.Read(buffer, 0, 2) != 2) return ImageSize.Empty;
+            if (stream.Read(buffer, 0, 2) != 2) return null;
 
             bool littleEndian = false;
             if (buffer[0] == 0x49 && buffer[1] == 0x49)
             {
                 littleEndian = true;
             }
-            else if (buffer[0] != 0x4D && buffer[1] != 0x4D) return ImageSize.Empty;
+            else if (buffer[0] != 0x4D && buffer[1] != 0x4D) return null;
 
-            using (AnyEndianReader reader = new AnyEndianReader(stream))
+            using (var reader = new AnyEndianReader(stream))
             {
                 reader.LittleEndian = littleEndian;
 
                 // TIFF tag marker
-                if (reader.ReadUInt16() != 0x002A) return ImageSize.Empty;
+                if (reader.ReadUInt16() != 0x002A) return null;
 
                 // Directory offset bytes
                 UInt32 dirOffset = reader.ReadUInt32();
@@ -142,15 +142,15 @@ namespace Codenet.Drawing
                     return new ImageSize
                     {
                         RawSize = new Size(width, height),
-                        Orientation = orientation
+                        ExifOrientation = orientation
                     };
                 }
             }
 
-            return ImageSize.Empty;
+            return null;
         }
 
-        private static ImageSize GetImageSize_JPEG(FileStream stream)
+        private static ImageSize? GetImageSize_JPEG(FileStream stream)
         {
             byte[] buffer = new byte[4];
 
@@ -164,22 +164,20 @@ namespace Codenet.Drawing
                 { // Parse APP1 EXIF
 
                     // Marker segment length
-                    if (stream.Read(buffer, 0, 2) != 2) return ImageSize.Empty;
+                    if (stream.Read(buffer, 0, 2) != 2) return null;
                     // int blockLength = ((buffer[0] << 8) | buffer[1]) - 2;
 
                     // Exif
                     if (stream.Read(buffer, 0, 4) != 4
-                        || !CompareBytes(buffer, JPEG_EXIF_HEADER, 4)) return ImageSize.Empty;
+                        || !CompareBytes(buffer, JPEG_EXIF_HEADER, 4)) return null;
 
                     // Read Byte alignment offset
                     if (stream.Read(buffer, 0, 2) != 2 ||
-                        buffer[0] != 0x00 || buffer[1] != 0x00) return ImageSize.Empty;
+                        buffer[0] != 0x00 || buffer[1] != 0x00) return null;
 
-                    ImageSize size = GetImageSize_EXIF(stream);
-                    if (!size.IsEmpty)
-                    {
+                    var size = GetImageSize_EXIF(stream);
+                    if (size != null)
                         return size;
-                    }
                 }
                 else if (buffer[1] == 0xC0 || buffer[1] == 0xC2)
                 { // Parse SOF0 (Start of Frame, Baseline DCT or Progressive DCT)
@@ -188,14 +186,14 @@ namespace Codenet.Drawing
                     stream.Seek(3, SeekOrigin.Current);
 
                     // Read Y,X
-                    if (stream.Read(buffer, 0, 4) != 4) return ImageSize.Empty;
+                    if (stream.Read(buffer, 0, 4) != 4) return null;
 
                     var originalSize = new Size(buffer[2] << 8 | buffer[3], buffer[0] << 8 | buffer[1]);
 
                     return new ImageSize
                     {
                         RawSize = originalSize,
-                        Orientation = 1
+                        ExifOrientation = 1
                     };
                 }
                 else
@@ -206,12 +204,12 @@ namespace Codenet.Drawing
                     }
                     else
                     {
-                        return ImageSize.Empty;
+                        return null;
                     }
                 }
             }
 
-            return ImageSize.Empty;
+            return null;
         }
 
         #region ICNS Definitions
@@ -270,20 +268,20 @@ namespace Codenet.Drawing
 
         #endregion
 
-        private static ImageSize GetImageSize_ICNS(FileStream stream)
+        private static ImageSize? GetImageSize_ICNS(FileStream stream)
         {
-            ImageSize size = ImageSize.Empty;
+            ImageSize? size = null;
             byte[] buffer = new byte[4];
             byte[] iconType = new byte[4];
 
             // Attempt to read ICNS header
             // Read ICNS magic number (always "icns")
             if (stream.Read(buffer, 0, 4) != 4
-                || !CompareBytes(buffer, ICNS_HEADER, 4)) return ImageSize.Empty;
+                || !CompareBytes(buffer, ICNS_HEADER, 4)) return null;
 
             int width = 0, height = 0;
 
-            using (AnyEndianReader reader = new AnyEndianReader(stream))
+            using (var reader = new AnyEndianReader(stream))
             {
                 reader.LittleEndian = false;
 
@@ -296,7 +294,7 @@ namespace Codenet.Drawing
                 do
                 {
                     // Read the icon type
-                    if (stream.Read(iconType, 0, 4) != 4) return ImageSize.Empty;
+                    if (stream.Read(iconType, 0, 4) != 4) return null;
 
                     // Read the Length of data, in bytes (including type and length), msb first
                     dataLength = reader.ReadUInt32();
@@ -323,18 +321,15 @@ namespace Codenet.Drawing
 
             if (width > 0 && height > 0)
             {
-                size.RawSize = new Size(width, height);
+                size = new ImageSize { RawSize = new Size(width, height) };
             }
 
             return size;
         }
 
-        public static ImageSize GetImageRawSizeAndOrientation(string path)
+        public static ImageSize? GetImageRawSizeAndOrientation(string path)
         {
-            bool success = false;
-            ImageSize size = ImageSize.Empty;
-
-            using (FileStream fileStream = File.OpenRead(path))
+            using (var fileStream = File.OpenRead(path))
             {
                 byte[] buffer = new byte[4];
 
@@ -343,152 +338,132 @@ namespace Codenet.Drawing
                     if (fileStream.Read(buffer, 0, 2) == 2 &&
                         CompareBytes(buffer, JPEG_HEADER, 2))
                     {// JPEG                        
-                        size = GetImageSize_JPEG(fileStream);
-                        success = !size.IsEmpty;
+                        var size = GetImageSize_JPEG(fileStream);
+                        if (size != null)
+                            return size;
                     }
                 }
                 catch { }
 
                 try
                 {
-                    if (!success)
+                    fileStream.Seek(0, SeekOrigin.Begin);
+
+                    byte[] buffer8 = new byte[8];
+
+                    if (fileStream.Read(buffer8, 0, 8) == 8 &&
+                        CompareBytes(buffer, PNG_HEADER))
                     {
-                        fileStream.Seek(0, SeekOrigin.Begin);
+                        // PNG
 
-                        byte[] buffer8 = new byte[8];
+                        fileStream.Seek(8, SeekOrigin.Current);
 
-                        if (fileStream.Read(buffer8, 0, 8) == 8 &&
-                            CompareBytes(buffer, PNG_HEADER))
+                        var originalSize = new Size();
+                        var success = false;
+
+                        if (fileStream.Read(buffer, 0, 4) == 4)
                         {
-                            // PNG
-
-                            fileStream.Seek(8, SeekOrigin.Current);
-
-                            var originalSize = new Size();
-
-                            if (fileStream.Read(buffer, 0, 4) == 4)
-                            {
-                                originalSize.Width = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
-                            }
-                            if (fileStream.Read(buffer, 0, 4) == 4)
-                            {
-                                originalSize.Height = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
-                                success = true;
-                            }
-
-                            size.RawSize = originalSize;
+                            originalSize.Width = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
                         }
-                    }
-                }
-                catch { }
-
-                try
-                {
-                    if (!success)
-                    {
-                        fileStream.Seek(0, SeekOrigin.Begin);
-
-                        if (fileStream.Read(buffer, 0, 3) == 3 &&
-                            CompareBytes(buffer, GIF_HEADER, 3))
+                        if (fileStream.Read(buffer, 0, 4) == 4)
                         {
-                            // GIF
-
-                            fileStream.Seek(3, SeekOrigin.Current); // 87a / 89a
-
-                            var originalSize = new Size();
-
-                            if (fileStream.Read(buffer, 0, 4) == 4)
-                            {
-                                originalSize.Width = (buffer[1] << 8) | buffer[0];
-                                originalSize.Height = (buffer[3] << 8) | buffer[2];
-                                success = true;
-                            }
-
-                            size.RawSize = originalSize;
-                        }
-                    }
-                }
-                catch { }
-
-                try
-                {
-                    if (!success)
-                    {
-                        fileStream.Seek(0, SeekOrigin.Begin);
-
-                        if (fileStream.Read(buffer, 0, 2) == 2 &&
-                            CompareBytes(buffer, BMP_HEADER, 2))
-                        {
-                            // BMP
-
-                            fileStream.Seek(16, SeekOrigin.Current);
-
-                            var originalSize = new Size();
-
-                            if (fileStream.Read(buffer, 0, 4) == 4)
-                            {
-                                originalSize.Width = (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
-                            }
-
-                            if (fileStream.Read(buffer, 0, 4) == 4)
-                            {
-                                originalSize.Height = (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
-                                success = true;
-                            }
-
-                            size.RawSize = originalSize;
-                        }
-                    }
-                }
-                catch { }
-
-                try
-                {
-                    if (!success)
-                    {
-                        fileStream.Seek(0, SeekOrigin.Begin);
-
-                        // Try the ICNS format
-                        size = GetImageSize_ICNS(fileStream);
-                        if (!size.IsEmpty)
-                        {
+                            originalSize.Height = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
                             success = true;
                         }
+
+                        if (success)
+                            return new ImageSize { RawSize = originalSize };
                     }
                 }
                 catch { }
 
                 try
                 {
-                    if (!success)
-                    {
-                        fileStream.Seek(0, SeekOrigin.Begin);
+                    fileStream.Seek(0, SeekOrigin.Begin);
 
-                        // TIFF starts with just plain EXIF
-                        size = GetImageSize_EXIF(fileStream);
-                        if (!size.IsEmpty)
+                    if (fileStream.Read(buffer, 0, 3) == 3 &&
+                        CompareBytes(buffer, GIF_HEADER, 3))
+                    {
+                        // GIF
+
+                        fileStream.Seek(3, SeekOrigin.Current); // 87a / 89a
+
+                        var originalSize = new Size();
+                        var success = false;
+
+                        if (fileStream.Read(buffer, 0, 4) == 4)
                         {
+                            originalSize.Width = (buffer[1] << 8) | buffer[0];
+                            originalSize.Height = (buffer[3] << 8) | buffer[2];
                             success = true;
                         }
+
+                        if (success)
+                            return new ImageSize { RawSize = originalSize };
                     }
+                }
+                catch { }
+
+                try
+                {
+                    fileStream.Seek(0, SeekOrigin.Begin);
+
+                    if (fileStream.Read(buffer, 0, 2) == 2 &&
+                        CompareBytes(buffer, BMP_HEADER, 2))
+                    {
+                        // BMP
+
+                        fileStream.Seek(16, SeekOrigin.Current);
+
+                        var originalSize = new Size();
+                        var success = false;
+
+                        if (fileStream.Read(buffer, 0, 4) == 4)
+                        {
+                            originalSize.Width = (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
+                        }
+
+                        if (fileStream.Read(buffer, 0, 4) == 4)
+                        {
+                            originalSize.Height = (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
+                            success = true;
+                        }
+                            
+                        if (success)
+                            return new ImageSize { RawSize = originalSize };
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    fileStream.Seek(0, SeekOrigin.Begin);
+
+                    // Try the ICNS format
+                    var size = GetImageSize_ICNS(fileStream);
+                    if (size != null)
+                        return size;
+                }
+                catch { }
+
+                try
+                {
+                    fileStream.Seek(0, SeekOrigin.Begin);
+
+                    // TIFF starts with just plain EXIF
+                    var size = GetImageSize_EXIF(fileStream);
+                    if (size != null)
+                        return size;
                 }
                 catch { }
             }
 
-            if (!success)
-            {
-                using (Image image = Image.FromFile(path))
-                {
-                    size.RawSize = image.Size;
-                }
-            }
-
-            return size;
+            return null;
         }
 
-        public static Size GetImageSize(string path)
+        public static Size? GetImageSize(string path)
         {
-            return GetImageRawSizeAndOrientation(path).TransformedSize;
+            return GetImageRawSizeAndOrientation(path)?.TransformedSize;
         }
 
         #region Bytes compare functions
@@ -524,12 +499,6 @@ namespace Codenet.Drawing
 
         public struct ImageSize
         {
-            public static readonly ImageSize Empty = new ImageSize
-            {
-                RawSize = Size.Empty,
-                Orientation = 1,
-            };
-
             /// <summary>
             /// Returns <code>RawSize.IsEmpty</code>
             /// </summary>
@@ -551,7 +520,7 @@ namespace Codenet.Drawing
                         }
                         else
                         {
-                            if (Orientation >= 5 && Orientation <= 8)
+                            if (ExifOrientation >= 5 && ExifOrientation <= 8)
                             {
                                 _TransformedSize = new Size(RawSize.Height, RawSize.Width);
                             }
@@ -577,31 +546,36 @@ namespace Codenet.Drawing
             /// 7										Mirror horizontal and rotate 90 CW
             /// 8										Rotate 270 CW
             /// </summary>
-            public int Orientation { get; set; }
+            public int ExifOrientation { get; set; }
 
             public bool ShouldFlipHorizontally
             {
-                get { return Orientation == 2 || Orientation == 5 || Orientation == 7; }
+                get { return ExifOrientation == 2 || ExifOrientation == 5 || ExifOrientation == 7; }
             }
 
             public bool ShouldFlipVertically
             {
-                get { return Orientation == 4; }
+                get { return ExifOrientation == 4; }
             }
 
             public int DegreesToRotate
             {
                 get
                 {
-                    switch (Orientation)
+                    switch (RequiredRotationToRevert)
                     {
                         default: return 0;
 
-                        case 3: return 180;
-                        case 5: return 270;
-                        case 6: return 90;
-                        case 7: return 90;
-                        case 8: return 270;
+                        case RotateFlipType.Rotate180:
+                            return 180;
+
+                        case RotateFlipType.Rotate270:
+                        case RotateFlipType.FlipXRotate270:
+                            return 270;
+
+                        case RotateFlipType.Rotate90:
+                        case RotateFlipType.FlipXRotate90:
+                            return 90;
                     }
                 }
             }
@@ -610,17 +584,17 @@ namespace Codenet.Drawing
             {
                 get
                 {
-                    switch (Orientation)
+                    switch (ExifOrientation)
                     {
                         default:
-                        case 1: return RotateFlipType.RotateNoneFlipNone;
-                        case 2: return RotateFlipType.RotateNoneFlipX;
-                        case 3: return RotateFlipType.Rotate180FlipNone;
-                        case 4: return RotateFlipType.RotateNoneFlipY;
-                        case 5: return RotateFlipType.Rotate270FlipX;
-                        case 6: return RotateFlipType.Rotate90FlipNone;
-                        case 7: return RotateFlipType.Rotate90FlipX;
-                        case 8: return RotateFlipType.Rotate270FlipNone;
+                        case 1: return RotateFlipType.None;
+                        case 2: return RotateFlipType.FlipX;
+                        case 3: return RotateFlipType.Rotate180;
+                        case 4: return RotateFlipType.FlipY;
+                        case 5: return RotateFlipType.FlipXRotate270;
+                        case 6: return RotateFlipType.Rotate90;
+                        case 7: return RotateFlipType.FlipXRotate90;
+                        case 8: return RotateFlipType.Rotate270;
                     }
                 }
             }
@@ -687,5 +661,17 @@ namespace Codenet.Drawing
             PropertyTagOrientation = 0x0112,
         }
 
+        public enum RotateFlipType
+        {
+            None,
+            FlipX,
+            Rotate180,
+            FlipY,
+            FlipXRotate270,
+            Rotate90,
+            Rotate270FlipY = 5,
+            FlipXRotate90,
+            Rotate270,
+        }
     }
 }

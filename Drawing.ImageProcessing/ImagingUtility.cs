@@ -188,9 +188,14 @@ namespace Codenet.Drawing.ImageProcessing
 
             if ((boundsX <= 0 || boundsY <= 0) && !fixedFinalSize)
             {
-                Size sz = ImageDimensionsDecoder.GetImageSize(sourcePath);
-                if (boundsX <= 0) boundsX = sz.Width;
-                if (boundsY <= 0) boundsY = sz.Height;
+                Size? sz = ImageDimensionsDecoder.GetImageSize(sourcePath);
+                if (sz == null)
+                {
+                    using (var image = Image.FromFile(sourcePath))
+                        sz = new Size(image.Width, image.Height);
+                }
+                if (boundsX <= 0) boundsX = sz.Value.Width;
+                if (boundsY <= 0) boundsY = sz.Value.Height;
             }
 
             using (var imgOriginal = Image.FromFile(sourcePath))
