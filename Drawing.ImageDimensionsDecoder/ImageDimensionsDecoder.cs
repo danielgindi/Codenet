@@ -329,7 +329,7 @@ public static class ImageDimensionsDecoder
 
     public static ImageSize? GetImageRawSizeAndOrientation(string path)
     {
-        using (var fileStream = File.OpenRead(path))
+        using (var fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
         {
             byte[] buffer = new byte[4];
 

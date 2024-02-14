@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Security.AccessControl;
@@ -128,7 +129,7 @@ public static class FileHelper
             }
             catch (IOException ioex)
             {
-                Console.WriteLine($"Codenet.IO.FileHelper.CreateEmptyTempFile - Error: {ioex}");
+                Trace.TraceError($"Codenet.IO.FileHelper.CreateEmptyTempFile - Error: {ioex}");
                 if (File.Exists(tempFilePath))
                 { // File exists, make up another name
                     tempFilePath = FolderHelper.GetTempDir() + Guid.NewGuid().ToString() + ".tmp";
@@ -140,7 +141,7 @@ public static class FileHelper
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Codenet.IO.FileHelper.CreateEmptyTempFile - Error: {ex}");
+                Trace.TraceError($"Codenet.IO.FileHelper.CreateEmptyTempFile - Error: {ex}");
                 break;
             }
         }
