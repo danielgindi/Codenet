@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Codenet.Drawing</RootNamespace>
-    <AssemblyName>Codenet.Drawing.ImageProcessing</AssemblyName>
+    <AssemblyName>Codenet.Drawing.Common</AssemblyName>
     <TargetFramework>netstandard2.0</TargetFramework>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -30,11 +30,11 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <Version>1.0.1</Version>
+	  <Version>2.0.0</Version>
     <Company />
-    <Product>Codenet.Drawing.ImageProcessing</Product>
+    <Product>Codenet.Drawing.Common</Product>
     <Copyright>Copyright Daniel Cohen Gindi (danielgindi@gmail.com) © 2021</Copyright>
-    <PackageId>Codenet.Drawing.ImageProcessing</PackageId>
+    <PackageId>Codenet.Drawing.Common</PackageId>
     <Authors>Daniel Cohen Gindi</Authors>
     <RepositoryUrl>https://github.com/danielgindi/Codenet</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -63,21 +63,7 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>..\_Release\Codenet.Drawing.Common.xml</DocumentationFile>
     <NoWarn>1701;1702;1591</NoWarn>
-    <DocumentationFile>..\_Release\Codenet.Drawing.ImageProcessing.xml</DocumentationFile>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="BitMiracle.LibJpeg.NET" Version="1.5.324" />
-    <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Drawing.Common.GdiPlus\Drawing.Common.GdiPlus.csproj" />
-    <ProjectReference Include="..\Drawing.Common\Drawing.Common.csproj" />
-    <ProjectReference Include="..\Drawing.Encoders.Gif\Drawing.Encoders.Gif.csproj" />
-    <ProjectReference Include="..\Drawing.Encoders.Jpeg\Drawing.Encoders.Jpeg.csproj" />
-    <ProjectReference Include="..\Drawing.ImageDimensionsDecoder\Drawing.ImageDimensionsDecoder.csproj" />
-    <ProjectReference Include="..\Drawing.Quantizers\Drawing.Quantizers.csproj" />
-    <ProjectReference Include="..\Drawing\Drawing.csproj" />
-    <ProjectReference Include="..\IO\IO.csproj" />
-  </ItemGroup>
 </Project>

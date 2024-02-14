@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
-using Codenet.Drawing.ImageProcessing.Encoders;
-using Codenet.Drawing.ImageProcessing.Quantizers.Helpers;
-using Codenet.Drawing.ImageProcessing.Quantizers.XiaolinWu;
-using Codenet.Drawing.ImageProcessing.Quantizers;
+using Codenet.Drawing.Encoders;
+using Codenet.Drawing.Common;
+using Codenet.Drawing.Quantizers.XiaolinWu;
+using Codenet.Drawing.Quantizers.Quantizers;
+using Codenet.Drawing.Quantizers;
+using Codenet.Drawing.Quantizers.Helpers;
 
 namespace Codenet.Drawing.ImageProcessing
 {
@@ -30,7 +32,7 @@ namespace Codenet.Drawing.ImageProcessing
         /// <param name="sourceImageData">Source image</param>
         /// <param name="destinationPath">Destination path</param>
         /// <param name="destinationFormat">Destination file format. null for original</param>
-        /// <param name="jpegQuality">0.0 - 1.0 Any out of range value will default to 1.0. 0 will mean 0.0.</param>
+        /// <param name="encodingOptions">Encoding options, including quality</param>
         /// <param name="processor">A processing function that will be executed for each frame.</param>
         /// <returns>true if successful, false if there was any failure.</returns>
         public static bool ProcessImageFramesToFile(
@@ -83,6 +85,28 @@ namespace Codenet.Drawing.ImageProcessing
                 }
                 catch { }
 
+                Action<Image, int> addFrame = (input, duration) =>
+                {
+                    BaseColorQuantizer quantizer = null;
+                    if (encodingOptions.QuantizerSupplier != null)
+                    {
+                        quantizer = encodingOptions.QuantizerSupplier(input);
+                    }
+                    if (quantizer == null)
+                    {
+                        quantizer = new WuColorQuantizer();
+                    }
+
+                    using var outputBuffer = GdiPlusImageBuffer.FromImage(input, ImageLockMode.ReadOnly);
+                    var targetPixelFormat = PixelFormatUtility.GetFormatByColorCount(255);
+                    using var quantizedBuffer = ImageBuffer.Allocate(input.Width, input.Height, targetPixelFormat);
+                    outputBuffer.Quantize(quantizedBuffer, quantizer, 255, 4);
+
+                    gifEncoder.SetNextFrameDuration(duration * 10);
+                    gifEncoder.SetNextFrameTransparentColor(transparentColor);
+                    gifEncoder.AddFrame(quantizedBuffer);
+                };
+
                 for (int frame = 0, duration; frame < frameCount; frame++)
                 {
                     try
@@ -92,52 +116,19 @@ namespace Codenet.Drawing.ImageProcessing
 
                         if (processor != null)
                         {
-                            using (Image output = processor(sourceImageData))
+                            using Image output = processor(sourceImageData);
+
+                            if (output != null)
                             {
-                                if (output != null)
-                                {
-                                    if (frame == 0)
-                                    {
-                                        gifEncoder.SetSize(output.Width, output.Height);
-                                    }
+                                if (frame == 0)
+                                    gifEncoder.SetSize(output.Width, output.Height);
 
-                                    BaseColorQuantizer quantizer = null;
-                                    if (encodingOptions.QuantizerSupplier != null)
-                                    {
-                                        quantizer = encodingOptions.QuantizerSupplier(output);
-                                    }
-                                    if (quantizer == null)
-                                    {
-                                        quantizer = new WuColorQuantizer();
-                                    }
-
-                                    using (var quantized = ImageBuffer.QuantizeImage(output, quantizer, 255, 4))
-                                    {
-                                        gifEncoder.SetNextFrameDuration(duration * 10);
-                                        gifEncoder.SetNextFrameTransparentColor(transparentColor);
-                                        gifEncoder.AddFrame(quantized);
-                                    }
-                                }
+                                addFrame(output, duration);
                             }
                         }
                         else
                         {
-                            BaseColorQuantizer quantizer = null;
-                            if (encodingOptions.QuantizerSupplier != null)
-                            {
-                                quantizer = encodingOptions.QuantizerSupplier(sourceImageData);
-                            }
-                            if (quantizer == null)
-                            {
-                                quantizer = new WuColorQuantizer();
-                            }
-
-                            using (var quantized = ImageBuffer.QuantizeImage(sourceImageData, quantizer, 255, 4))
-                            {
-                                gifEncoder.SetNextFrameDuration(duration * 10);
-                                gifEncoder.SetNextFrameTransparentColor(transparentColor);
-                                gifEncoder.AddFrame(quantized);
-                            }
+                            addFrame(sourceImageData, duration);
                         }
                     }
                     catch (Exception ex)
@@ -158,71 +149,41 @@ namespace Codenet.Drawing.ImageProcessing
             }
             else
             {
-                if (processor != null)
-                {
-                    using (Image output = processor(sourceImageData))
-                    {
-                        if (output != null)
-                        {
-                            if (destinationFormat.Equals(ImageFormat.Jpeg))
-                            {
-                                JpegEncoder.EncodeImageWithLibjpeg(output, destinationPath, encodingOptions.JpegQuality);
-                            }
-                            else if (destinationFormat.Equals(ImageFormat.Gif))
-                            {
-                                BaseColorQuantizer quantizer = null;
-                                if (encodingOptions.QuantizerSupplier != null)
-                                {
-                                    quantizer = encodingOptions.QuantizerSupplier(output);
-                                }
-                                if (quantizer == null)
-                                {
-                                    quantizer = new WuColorQuantizer();
-                                }
-
-                                using (var quantized = ImageBuffer.QuantizeImage(output, quantizer, 255, 4))
-                                {
-                                    quantized.Save(destinationPath, ImageFormat.Gif);
-                                }
-                            }
-                            else
-                            {
-                                output.Save(destinationPath, destinationFormat);
-                            }
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    }
-                }
-                else
+                Action<Image> addFrame = (output) =>
                 {
                     if (destinationFormat.Equals(ImageFormat.Jpeg))
                     {
-                        JpegEncoder.EncodeImageWithLibjpeg(sourceImageData, destinationPath, encodingOptions.JpegQuality);
+                        using var imageBuffer = GdiPlusImageBuffer.FromImage(output, ImageLockMode.ReadOnly);
+                        JpegEncoder.EncodeImageWithLibjpeg(imageBuffer, destinationPath, encodingOptions.JpegQuality);
                     }
                     else if (destinationFormat.Equals(ImageFormat.Gif))
                     {
                         BaseColorQuantizer quantizer = null;
                         if (encodingOptions.QuantizerSupplier != null)
-                        {
-                            quantizer = encodingOptions.QuantizerSupplier(sourceImageData);
-                        }
+                            quantizer = encodingOptions.QuantizerSupplier(output);
                         if (quantizer == null)
-                        {
                             quantizer = new WuColorQuantizer();
-                        }
 
-                        using (var quantized = ImageBuffer.QuantizeImage(sourceImageData, quantizer, 255, 4))
-                        {
-                            quantized.Save(destinationPath, ImageFormat.Gif);
-                        }
+                        using var quantized = GdiPlusImageBuffer.QuantizeImage(output, quantizer, 255, 4);
+                        quantized.Save(destinationPath, ImageFormat.Gif);
                     }
                     else
                     {
-                        sourceImageData.Save(destinationPath, destinationFormat);
+                        output.Save(destinationPath, destinationFormat);
                     }
+                };
+
+                if (processor != null)
+                {
+                    using Image output = processor(sourceImageData);
+                    if (output != null)
+                        addFrame(output);
+                    else
+                        return false;
+                }
+                else
+                {
+                    addFrame(sourceImageData);
                 }
             }
             return true;

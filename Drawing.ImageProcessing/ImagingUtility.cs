@@ -2,10 +2,10 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
-using Codenet.Drawing.ImageProcessing.Encoders;
-using Codenet.Drawing.ImageProcessing.Quantizers.Helpers;
-using Codenet.Drawing.ImageProcessing.Quantizers.XiaolinWu;
-using Codenet.Drawing.ImageProcessing.Quantizers;
+using Codenet.Drawing.Common;
+using Codenet.Drawing.Encoders;
+using Codenet.Drawing.Quantizers.XiaolinWu;
+using Codenet.Drawing.Quantizers.Quantizers;
 using Codenet.IO;
 using System.Diagnostics;
 
@@ -373,7 +373,8 @@ namespace Codenet.Drawing.ImageProcessing
 
             if (imageFormat.Equals(ImageFormat.Jpeg))
             {
-                JpegEncoder.EncodeImageWithLibjpeg(imageData, imagePath, encodingOptions.JpegQuality);
+                using var imageBuffer = GdiPlusImageBuffer.FromImage(imageData, ImageLockMode.ReadOnly);
+                JpegEncoder.EncodeImageWithLibjpeg(imageBuffer, imagePath, encodingOptions.JpegQuality);
             }
             else if (imageFormat.Equals(ImageFormat.Gif))
             {
@@ -387,7 +388,7 @@ namespace Codenet.Drawing.ImageProcessing
                     quantizer = new WuColorQuantizer();
                 }
 
-                using (var quantized = ImageBuffer.QuantizeImage(imageData, quantizer, 255, 4))
+                using (var quantized = GdiPlusImageBuffer.QuantizeImage(imageData, quantizer, 255, 4))
                 {
                     quantized.Save(imagePath, ImageFormat.Gif);
                 }
