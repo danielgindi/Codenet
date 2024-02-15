@@ -23,7 +23,7 @@ public static class ImageSaveUtil
         SKImage image,
         string destPath,
         SKEncodedImageFormat imageFormat,
-        ImageEncodingOptions? encodingOptions)
+        ImageEncodingOptions? encodingOptions = null)
     {
         using var bitmap = SKBitmap.FromImage(image);
         if (bitmap == null)
@@ -42,7 +42,7 @@ public static class ImageSaveUtil
         SKBitmap imageData,
         string destPath, 
         SKEncodedImageFormat imageFormat,
-        ImageEncodingOptions? encodingOptions)
+        ImageEncodingOptions? encodingOptions = null)
     {
         encodingOptions ??= EncodingOptionsWithQualityBasedOnSize(imageData.Width, imageData.Height);
 

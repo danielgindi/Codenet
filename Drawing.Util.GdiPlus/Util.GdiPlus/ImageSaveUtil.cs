@@ -22,7 +22,7 @@ public static class ImageSaveUtil
         Image image,
         string destPath,
         ImageFormat imageFormat,
-        ImageEncodingOptions? encodingOptions)
+        ImageEncodingOptions? encodingOptions = null)
     {
         encodingOptions ??= EncodingOptionsWithQualityBasedOnSize(image.Width, image.Height);
 
