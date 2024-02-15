@@ -1,4 +1,4 @@
-﻿namespace Codenet.Drawing.ImageProcessing;
+﻿namespace Codenet.Drawing.Common;
 
 public enum ExifPropertyTag : int
 {

@@ -41,6 +41,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Drawing.Common.Skia", "Draw
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Drawing.Util.Skia", "Drawing.Util.Skia\Drawing.Util.Skia.csproj", "{4AE09E52-62EC-4389-9BA6-8B6A9F749A72}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Drawing.Util.GdiPlus", "Drawing.Util.GdiPlus\Drawing.Util.GdiPlus.csproj", "{0E3EEA58-8B48-4DE7-A5BB-E7FDD91804B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -123,6 +125,10 @@ Global
 		{4AE09E52-62EC-4389-9BA6-8B6A9F749A72}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4AE09E52-62EC-4389-9BA6-8B6A9F749A72}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4AE09E52-62EC-4389-9BA6-8B6A9F749A72}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E3EEA58-8B48-4DE7-A5BB-E7FDD91804B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E3EEA58-8B48-4DE7-A5BB-E7FDD91804B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E3EEA58-8B48-4DE7-A5BB-E7FDD91804B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E3EEA58-8B48-4DE7-A5BB-E7FDD91804B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
