@@ -3,8 +3,8 @@ using System.Drawing;
 using System.IO;
 using System.Collections.Generic;
 using Codenet.Drawing.Common;
-using Codenet.Drawing.Quantizers.NeuQuant;
 using Codenet.Drawing.Quantizers.Helpers;
+using Codenet.Drawing.Quantizers.DistinctSelection;
 
 namespace Codenet.Drawing.Encoders;
 
@@ -223,14 +223,14 @@ public class GifEncoder : IDisposable
     /// <summary>
     /// Initiates writing of a GIF file with the specified name.
     /// </summary>
-    /// <param name="FilePath">String containing output file name.</param>
+    /// <param name="filePath">String containing output file name.</param>
     /// <returns>false if open or initial write failed.</returns>
-    public bool Start(String FilePath)
+    public bool Start(string filePath)
     {
         bool ok;
         try
         {
-            _FileStream = new FileStream(FilePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
+            _FileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
             ok = Start(_FileStream);
             _CloseStreamWhenFinished = true;
         }
@@ -360,20 +360,32 @@ public class GifEncoder : IDisposable
     /// </summary>
     protected void AnalyzePixels()
     {
-        NeuralColorQuantizer quantizer = new NeuralColorQuantizer();
+        var sourceImageBuffer = _FrameBuffer;
+        var pixelsSource = sourceImageBuffer;
+        ImageBuffer quantizedImageBuffer = null;
 
-        using (var quantizedImageBuffer = ImageBuffer.Allocate(_FrameBuffer.Width, _FrameBuffer.Height, PixelFormatUtility.GetFormatByColorCount(256)))
+        try
         {
-            _IndexedPixels = new byte[_FrameBuffer.Width * _FrameBuffer.Height];
-
-            var sourceImageBuffer = _FrameBuffer;
+            List<NeatColor> palette = null;
             int transparentPixelX = -1, transparentPixelY = -1;
             var hasTransparentColor = _TransparentColor != Color.Empty && sourceImageBuffer.ScanForColor(
                 NeatColor.FromARGB(unchecked((UInt32)_TransparentColor.ToArgb())),
                 out transparentPixelX, out transparentPixelY);
 
-            sourceImageBuffer.Quantize(quantizedImageBuffer, quantizer, null, 256, 1);
-            List<NeatColor> palette = quantizedImageBuffer.Palette;
+            if (sourceImageBuffer.IsIndexed && sourceImageBuffer.Palette != null && sourceImageBuffer.Palette.Count <= 256)
+            {
+                palette = sourceImageBuffer.Palette;
+            }
+            else
+            {
+                var quantizer = new DistinctSelectionQuantizer();
+                quantizedImageBuffer = ImageBuffer.Allocate(_FrameBuffer.Width, _FrameBuffer.Height, PixelFormatUtility.GetFormatByColorCount(256));
+                sourceImageBuffer.Quantize(quantizedImageBuffer, quantizer, null, 256, 1);
+                palette = quantizedImageBuffer.Palette;
+                pixelsSource = quantizedImageBuffer;
+            }
+
+            _IndexedPixels = new byte[_FrameBuffer.Width * _FrameBuffer.Height];
 
             _ColorTable = new byte[768];
             int j = 0;
@@ -384,38 +396,42 @@ public class GifEncoder : IDisposable
                 _ColorTable[j++] = c.Blue;
             }
 
-            using var pixel = new PixelAccess(quantizedImageBuffer);
+            using var pixel = new PixelAccess(pixelsSource);
 
             j = 0;
-            for (int y = 0, x, w = quantizedImageBuffer.Width, h = quantizedImageBuffer.Height; y < h; y++)
+            for (int y = 0, x, w = pixelsSource.Width, h = pixelsSource.Height; y < h; y++)
             {
                 for (x = 0; x < w; x++)
                 {
                     pixel.Set(x, y);
-                    if (quantizedImageBuffer.CanRead)
-                        quantizedImageBuffer.ReadPixel(pixel);
+                    if (pixelsSource.CanRead)
+                        pixelsSource.ReadPixel(pixel);
                     _IndexedPixels[j++] = pixel.Index;
                 }
             }
 
-            _ColorDepth = 8;
+            _ColorDepth = 8; // (int)Math.Ceiling(Math.Log(palette.Count + 1, 2))
             _ColorTableSize = 7;
 
             if (hasTransparentColor)
             {
-                //Color c = quantizedImageBuffer.ScanForClosestColor(_TransparentColor);
+                //Color c = pixelsSource.ScanForClosestColor(_TransparentColor);
                 //_TransparentColorIndex = c.IsEmpty ? 255 : palette.IndexOf(c);
 
                 pixel.Set(transparentPixelX, transparentPixelY);
-                if (quantizedImageBuffer.CanRead) 
-                    quantizedImageBuffer.ReadPixel(pixel);
+                if (pixelsSource.CanRead)
+                    pixelsSource.ReadPixel(pixel);
                 _TransparentColorIndex = pixel.Index;
             }
             else
             {
-                _TransparentColorIndex = quantizedImageBuffer.ScanForFirstUnusedColorIndex();
+                _TransparentColorIndex = pixelsSource.ScanForFirstUnusedColorIndex();
                 if (_TransparentColorIndex == -1) _TransparentColorIndex = 255;
             }
+        }
+        finally
+        {
+            quantizedImageBuffer?.Dispose();
         }
     }
 

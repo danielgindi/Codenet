@@ -156,7 +156,7 @@ public static class ImageThumbnailUtil
                 backgroundColor = FixTransparentBgColor(backgroundColor ?? Color.Transparent, selectedFormat);
 
                 imgProcessed = new Bitmap(finalSize.Width, finalSize.Height,
-                    selectedFormat == ImageFormat.Png 
+                    selectedFormat == ImageFormat.Png || selectedFormat == ImageFormat.Gif
                         ? System.Drawing.Imaging.PixelFormat.Format32bppArgb
                         : System.Drawing.Imaging.PixelFormat.Format24bppRgb);
 
@@ -405,7 +405,8 @@ public static class ImageThumbnailUtil
     private static Color FixTransparentBgColor(Color color, ImageFormat destinationFormat)
     {
         if (destinationFormat.Equals(ImageFormat.Png) ||
-            destinationFormat.Equals(ImageFormat.Icon))
+            destinationFormat.Equals(ImageFormat.Icon)||
+            destinationFormat.Equals(ImageFormat.Gif) && color == Color.Transparent)
             return color; // Supports transparency
 
         if (color.A == 0)

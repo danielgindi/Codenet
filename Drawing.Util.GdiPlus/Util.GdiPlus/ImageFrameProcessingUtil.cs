@@ -104,11 +104,10 @@ public static class ImageFrameProcessingUtil
                 gifEncoder.SetRepeat(loopCount);
 
                 byte[] pallette = sourceImage.GetPropertyItem((int)ExifPropertyTag.PropertyTagGlobalPalette).Value;
-                int transparentColorIndex = -1;
-                Color transparentColor = Color.Empty;
+                Color transparentColor = Color.Transparent;
                 try
                 {
-                    transparentColorIndex = sourceImage.GetPropertyItem((int)ExifPropertyTag.PropertyTagIndexTransparent).Value[0];
+                    var transparentColorIndex = sourceImage.GetPropertyItem((int)ExifPropertyTag.PropertyTagIndexTransparent).Value[0];
                     transparentColor = Color.FromArgb(pallette[transparentColorIndex * 3], pallette[transparentColorIndex * 3 + 1], pallette[transparentColorIndex * 3 + 2]);
                 }
                 catch { }
@@ -130,6 +129,12 @@ public static class ImageFrameProcessingUtil
                     using var quantizedBuffer = ImageBuffer.Allocate(input.Width, input.Height, targetPixelFormat);
                     inputBuffer.Quantize(quantizedBuffer, quantizer, 255, 4);
 
+                    var transparentIndex = quantizer.GetPaletteIndex(NeatColor.FromARGB(unchecked((UInt32)transparentColor.ToArgb())), 0, 0);
+                    if (transparentIndex != -1)
+                    {
+                        transparentColor = Color.FromArgb(unchecked((int)quantizedBuffer.Palette[transparentIndex].ARGB));
+                    }
+                    
                     gifEncoder.SetNextFrameDuration(duration * 10);
                     gifEncoder.SetNextFrameTransparentColor(transparentColor);
                     gifEncoder.AddFrame(quantizedBuffer);

@@ -568,7 +568,7 @@ public class WuColorQuantizer : BaseColorQuantizer
     /// </summary>
     protected override void OnGetPaletteIndex(NeatColor color, UInt32 key, Int32 x, Int32 y, out Int32 paletteIndex)
     {
-        paletteIndex = indices[x + y*imageWidth];
+        paletteIndex = indices[x + y * imageWidth];
     }
 
     /// <summary>

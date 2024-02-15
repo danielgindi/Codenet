@@ -9,6 +9,7 @@ using Codenet.Drawing.Quantizers.XiaolinWu;
 using Codenet.Drawing.Quantizers.Helpers;
 using Codenet.IO;
 using SkiaSharp;
+using System.Drawing;
 
 #nullable enable
 
@@ -119,13 +120,19 @@ public static class ImageFrameProcessingUtil
                     using var quantizedBuffer = ImageBuffer.Allocate(input.Width, input.Height, targetPixelFormat);
                     inputBuffer.Quantize(quantizedBuffer, quantizer, 255, 4);
 
+                    var transparentColor = NeatColor.FromARGB(0x00FFFFFFu);
+                    var transparentIndex = quantizer.GetPaletteIndex(transparentColor, 0, 0);
+                    if (transparentIndex != -1)
+                    {
+                        transparentColor = quantizedBuffer.Palette[transparentIndex];
+                    }
+
                     gifEncoder.SetNextFrameDuration(duration);
-                    gifEncoder.SetNextFrameTransparentColor(System.Drawing.Color.FromArgb(0x00FFFFFF));
+                    gifEncoder.SetNextFrameTransparentColor(Color.FromArgb(unchecked((int)transparentColor.ARGB)));
                     gifEncoder.AddFrame(quantizedBuffer);
                 };
 
                 gifEncoder.SetSize(codec.Info.Width, codec.Info.Height);
-
                 gifEncoder.SetRepeat(codec.RepetitionCount == -1 ? 0 : codec.RepetitionCount);
 
                 int frameCount = codec.FrameCount;
