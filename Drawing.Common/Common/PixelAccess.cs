@@ -164,12 +164,12 @@ public class PixelAccess : IDisposable
             case PixelFormat.Format24bppRgb: return typeof(PixelDataRgb888);
             case PixelFormat.Format32bppRgb: return typeof(PixelDataRgb8888);
             case PixelFormat.Format32bppArgb: return typeof(PixelDataArgb8888);
+            case PixelFormat.Format32bppPArgb: return typeof(PixelDataPArgb8888);
             case PixelFormat.Format48bppRgb: return typeof(PixelDataRgb48);
             case PixelFormat.Format64bppArgb: return typeof(PixelDataArgb64);
 
             default:
-                string message = string.Format("This pixel format '{0}' is either indexed, or not supported.", pixelFormat);
-                throw new NotSupportedException(message);
+                throw new NotSupportedException($"This pixel format '{pixelFormat}' is either indexed, or not supported.");
         }
     }
 

@@ -42,7 +42,8 @@ public class SkiaImageBuffer : ImageBuffer
     {
         var pixelFormat = bitmap.ColorType switch
         {
-            SKColorType.Rgba8888 => PixelFormat.Format32bppArgb,
+            SKColorType.Bgra8888 when bitmap.AlphaType != SKAlphaType.Premul => PixelFormat.Format32bppArgb,
+            SKColorType.Bgra8888 when bitmap.AlphaType == SKAlphaType.Premul => PixelFormat.Format32bppPArgb,
             SKColorType.Rgb888x => PixelFormat.Format32bppRgb,
             SKColorType.Rgb565 => PixelFormat.Format16bppRgb565,
             _ => throw new NotSupportedException("Unsupported pixel format.")

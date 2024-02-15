@@ -54,7 +54,7 @@ internal struct PixelDataRgb888 : INonIndexedPixel
     /// </summary>
     public UInt64 Value
     {
-        get { return (UInt32) Argb; }
+        get { return Argb; }
         set
         {
             red = (Byte) ((value >> PixelAccess.RedShift) & 0xFF);
