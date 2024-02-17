@@ -5,6 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
+	<LangVersion>10.0</LangVersion>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Codenet.Serialization</RootNamespace>
@@ -29,7 +30,7 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <Version>1.0.1</Version>
+    <Version>2.0.0</Version>
     <Company />
     <Product>Codenet.Serialization</Product>
     <Copyright>Copyright Daniel Cohen Gindi (danielgindi@gmail.com) © 2021</Copyright>

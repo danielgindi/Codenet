@@ -7,8 +7,13 @@ Some of it was migrated from the antique `dg.Utilities` and from `Imaging.net`.
 Packages:
 * `Codenet.Collections` - helpers regarding collections
 * `Codenet.Drawing` - helpers regarding drawing (css color parsing, `Size` bounds calculation with aspect ratio)
-* `Codenet.Drawing.ImageDimensionsDecoder` - A fast decoder for image dimensions only, supporting several popular formats (jpeg, tiff
-* `Codenet.Drawing.ImageProcessing` - Image processing utilities migrated from `Imaging.net`
+* `Codenet.Drawing.Common` - Mainly common interfaces and base classes that other modules here utilize. Not much to do with it directly.
+* `Codenet.Drawing.Common.GdiPlus` - `Gdi+` specific extensions/subclasses, mainly over `ImageBuffer`.
+* `Codenet.Drawing.Common.Skia` - `SkiaSharp` specific extensions/subclasses, mainly over `ImageBuffer`.
+* `Codenet.Drawing.Encoders.Gif` - A GIF encoder that works with the common `ImageBuffer`, based on the work of Nased Kevin Weiner and David Rowley.
+* `Codenet.Drawing.Encoders.Jpeg` - A JPEG encoder that works with the common `ImageBuffer`, based on BitMiracle's libjpeg wrapper.
+* `Codenet.Drawing.ImageDimensionsDecoder` - A fast decoder for image dimensions only, supporting several popular formats (jpeg, tiff, png, gif, bmp, icns). Taking in account EXIF orientation tags.
+* `Codenet.Drawing.ImageProcessing` - Deprecated image processing utilities migrated from `Imaging.net`. Now its main utils are split between relative Skia/GdiPlus utils modules. The rest is filters for which Skia has its own mechanism.
   * A set of features to process images, with some ready-made filters and allows custom filters.
   * Builtin filters: `blur`, `brightness`, `color filter`, `contrast`, `convolution matrix`, `emboss`, `equalize histogram`, `exact color replace`, `flip`, `gamma correction`, `grayscale`, `guassian blur`, `invert`, `laplace edge detection`, `pixellate`, `red eye reduction`, `reduce transparancy`, `saturate`, `sepia`, `sharpen`, `sobel edge detection`)
   * Method to resize/crop/add-borders/round-corners/zoom/set-bg-color in one take. You can anchor the crop, keep aspect ratio etc.
@@ -16,6 +21,18 @@ Packages:
   * Method to iterate over each frame of an image, with automatic encoding of the output.
   * Encodes JPEGs using Libjpeg (`BitMiracle.LibJpeg.NET`), to achieve better compression ratios.
   * Encodes (animated!) GIFs with high quality quantizers (You can choose between many algorithms). The quantizers were written by `Smart K8` and are under the `The Code Project Open License (CPOL)` license.
+* `Codenet.Drawing.Quantizers` - A set of quantizers, used for encoding GIFs with surprising high quality. These were originally written by `Smart K8` and are under the `The Code Project Open License (CPOL)` license.
+* `Codenet.Drawing.Utils.GdiPlus` - A set of utils for `Gdi+` (`System.Drawing.Common`). These include:
+ * `ImageThumbnailUtil`: Thumbnail generation, with high definition control over sizing, cropping, fitting, and borders.
+ * `ImageMarginCropUtil`: Margin cropping for images, for when an image has single color margins.
+ * `ImageSaveUtil`: Simple saving an image from `Image` object. Handles alternative libjpeg encoding and GIFs.
+ * `ImageFrameProcessingUtil`: Allows per-frame processing of images. This is for handling multi-frame images like GIFs.
+* `Codenet.Geography` - Stuff like distance between coordinates
+* `Codenet.Drawing.Utils.Skia` - A set of utils for `SkiaSharp`, which replaces `System.Drawing.Common`. These include:
+ * `ImageThumbnailUtil`: Thumbnail generation, with high definition control over sizing, cropping, fitting, and borders.
+ * `ImageMarginCropUtil`: Margin cropping for images, for when an image has single color margins.
+ * `ImageSaveUtil`: Simple saving an image from `SKBitmap`/`SKImage` object. Handles alternative libjpeg encoding and GIFs.
+ * `ImageFrameProcessingUtil`: Allows per-frame processing of images. This is for handling multi-frame images like GIFs.
 * `Codenet.Geography` - Stuff like distance between coordinates
 * `Codenet.IO` - File/folder utilities
 * `Codenet.IO.AnyEndianReader` - big/little endian reader, switchable during reading

@@ -1,9 +1,8 @@
-﻿namespace Codenet.Drawing.ImageProcessing.Processing.Filters
+﻿namespace Codenet.Drawing.ImageProcessing.Processing.Filters;
+
+public interface IImageFilter
 {
-    public interface IImageFilter
-    {
-        FilterError ProcessImage(
-            DirectAccessBitmap bmp,
-            params object[] args);
-    }
+    FilterError ProcessImage(
+        DirectAccessBitmap bmp,
+        params object[] args);
 }

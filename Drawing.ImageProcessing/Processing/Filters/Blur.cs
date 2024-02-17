@@ -1,27 +1,26 @@
-﻿namespace Codenet.Drawing.ImageProcessing.Processing.Filters
+﻿namespace Codenet.Drawing.ImageProcessing.Processing.Filters;
+
+public class Blur : ConvolutionMatrix
 {
-    public class Blur : ConvolutionMatrix
+    public new FilterError ProcessImage(
+        DirectAccessBitmap bmp,
+        params object[] args)
     {
-        public new FilterError ProcessImage(
-            DirectAccessBitmap bmp,
-            params object[] args)
+        Matrix3x3 kernel = new Matrix3x3(
+            1, 1, 1,
+            1, 1, 1,
+            1, 1, 1,
+            1, 0, true);
+        FilterColorChannel channels = FilterColorChannel.None;
+
+        foreach (object arg in args)
         {
-            Matrix3x3 kernel = new Matrix3x3(
-                1, 1, 1,
-                1, 1, 1,
-                1, 1, 1,
-                1, 0, true);
-            FilterColorChannel channels = FilterColorChannel.None;
-
-            foreach (object arg in args)
+            if (arg is FilterColorChannel)
             {
-                if (arg is FilterColorChannel)
-                {
-                    channels |= (FilterColorChannel)arg;
-                }
+                channels |= (FilterColorChannel)arg;
             }
-
-            return base.ProcessImage(bmp, kernel, channels);
         }
+
+        return base.ProcessImage(bmp, kernel, channels);
     }
 }

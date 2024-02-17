@@ -1,29 +1,28 @@
-﻿namespace Codenet.Drawing.ImageProcessing.Processing.Filters
+﻿namespace Codenet.Drawing.ImageProcessing.Processing.Filters;
+
+public class LaplaceEdgeDetect : ConvolutionMatrix
 {
-    public class LaplaceEdgeDetect : ConvolutionMatrix
+    public new FilterError ProcessImage(
+        DirectAccessBitmap bmp,
+        params object[] args)
     {
-        public new FilterError ProcessImage(
-            DirectAccessBitmap bmp,
-            params object[] args)
+        Matrix5x5 kernel = new Matrix5x5(
+            -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1,
+            -1, -1, 24, -1, -1,
+            -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1,
+            1, 0, false);
+        FilterColorChannel channels = FilterColorChannel.None;
+
+        foreach (object arg in args)
         {
-            Matrix5x5 kernel = new Matrix5x5(
-                -1, -1, -1, -1, -1,
-                -1, -1, -1, -1, -1,
-                -1, -1, 24, -1, -1,
-                -1, -1, -1, -1, -1,
-                -1, -1, -1, -1, -1,
-                1, 0, false);
-            FilterColorChannel channels = FilterColorChannel.None;
-
-            foreach (object arg in args)
+            if (arg is FilterColorChannel)
             {
-                if (arg is FilterColorChannel)
-                {
-                    channels |= (FilterColorChannel)arg;
-                }
+                channels |= (FilterColorChannel)arg;
             }
-
-            return base.ProcessImage(bmp, kernel, channels);
         }
+
+        return base.ProcessImage(bmp, kernel, channels);
     }
 }
