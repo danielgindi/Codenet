@@ -173,7 +173,10 @@ public static class ImageThumbnailUtil
                         finalSize.Width - halfBorderWidth,
                         finalSize.Height - halfBorderWidth
                     ),
-                    cornerRadius: cornerRadius,
+                    cornerRadiusTopLeft: (roundedCorners & Corner.TopLeft) != Corner.None ? cornerRadius : 0,
+                    cornerRadiusTopRight: (roundedCorners & Corner.TopRight) != Corner.None ? cornerRadius : 0,
+                    cornerRadiusBottomRight: (roundedCorners & Corner.BottomRight) != Corner.None ? cornerRadius : 0,
+                    cornerRadiusBottomLeft: (roundedCorners & Corner.BottomLeft) != Corner.None ? cornerRadius : 0,
                     borderWidth: borderWidth,
                     borderColor: borderColor,
                     backgroundColor: null,
@@ -205,6 +208,7 @@ public static class ImageThumbnailUtil
     /// <param name="destPath">Having the <paramref name="destPath"/> the same as <paramref name="sourcePath"/> may not be safe, especially for multi-frame sources where the source is streamed.</param>
     /// <param name="destinationFormat">Destination file format. null for original</param>
     /// <param name="encodingOptions"></param>
+    /// <param name="roundedCorners"></param>
     /// <param name="cornerRadius"></param>
     /// <param name="backgroundColor"></param>
     /// <param name="borderWidth"></param>
@@ -215,6 +219,7 @@ public static class ImageThumbnailUtil
         string destPath,
         SKEncodedImageFormat? destinationFormat,
         ImageEncodingOptions? encodingOptions,
+        Corner roundedCorners,
         int cornerRadius,
         SKColor backgroundColor,
         float borderWidth,
@@ -266,7 +271,10 @@ public static class ImageThumbnailUtil
                         frame.Width - halfBorderWidth,
                         frame.Height - halfBorderWidth
                     ),
-                    cornerRadius: cornerRadius,
+                    cornerRadiusTopLeft: (roundedCorners & Corner.TopLeft) != Corner.None ? cornerRadius : 0,
+                    cornerRadiusTopRight: (roundedCorners & Corner.TopRight) != Corner.None ? cornerRadius : 0,
+                    cornerRadiusBottomRight: (roundedCorners & Corner.BottomRight) != Corner.None ? cornerRadius : 0,
+                    cornerRadiusBottomLeft: (roundedCorners & Corner.BottomLeft) != Corner.None ? cornerRadius : 0,
                     borderWidth: borderWidth,
                     borderColor: borderColor,
                     backgroundColor: null);
@@ -291,7 +299,10 @@ public static class ImageThumbnailUtil
         SKCanvas canvas,
         SKBitmap bitmap,
         SKRectI borderRect,
-        int cornerRadius,
+        int cornerRadiusTopLeft,
+        int cornerRadiusTopRight,
+        int cornerRadiusBottomRight,
+        int cornerRadiusBottomLeft,
         float borderWidth,
         SKColor? borderColor,
         SKColor? backgroundColor,
@@ -303,44 +314,124 @@ public static class ImageThumbnailUtil
             targetRect = null;
         }
 
-        using var borderPath = new SKPath();
+        using var path = new SKPath();
 
-        if (cornerRadius > 0)
-            borderPath.AddRoundRect(borderRect, cornerRadius, cornerRadius);
-        else borderPath.AddRect(borderRect);
+        var hasRounded = cornerRadiusTopLeft > 0 ||
+            cornerRadiusTopRight > 0 ||
+            cornerRadiusBottomRight > 0 ||
+            cornerRadiusBottomLeft > 0;
+
+        if (hasRounded)
+        {
+            if (cornerRadiusTopLeft == cornerRadiusTopRight &&
+                cornerRadiusTopRight == cornerRadiusBottomRight &&
+                cornerRadiusBottomRight == cornerRadiusBottomLeft)
+            {
+                path.AddRoundRect(borderRect, cornerRadiusTopLeft, cornerRadiusTopLeft);
+            }
+            else
+            {
+                int cornerW, cornerH;
+
+                if (cornerRadiusTopLeft > 0)
+                {
+                    cornerW = Math.Min(borderRect.Width - Math.Min(cornerRadiusTopRight, borderRect.Width), cornerRadiusTopLeft);
+                    cornerH = Math.Min(borderRect.Height - Math.Min(cornerRadiusBottomLeft, borderRect.Height), cornerRadiusTopLeft);
+                    path.ArcTo(SKRect.Create(
+                        new SKPoint(borderRect.Left, borderRect.Top),
+                        new SKSize(borderRect.Left + cornerW * 2, borderRect.Top + cornerH * 2)),
+                        180, 90, false);
+                }
+                else
+                {
+                    path.MoveTo(0, 0);
+                }
+
+                if (cornerRadiusTopRight > 0)
+                {
+                    cornerW = Math.Min(borderRect.Width - Math.Min(cornerRadiusTopLeft, borderRect.Width), cornerRadiusTopRight);
+                    cornerH = Math.Min(borderRect.Height - Math.Min(cornerRadiusBottomRight, borderRect.Height), cornerRadiusTopRight);
+                    path.ArcTo(SKRect.Create(
+                        new SKPoint(
+                            borderRect.Left + borderRect.Width - cornerW * 2,
+                            borderRect.Top),
+                        new SKSize(cornerW * 2, cornerH * 2)),
+                        270, 90, false);
+                }
+                else
+                {
+                    path.LineTo(borderRect.Right, 0);
+                }
+
+                if (cornerRadiusBottomRight > 0)
+                {
+                    cornerW = Math.Min(borderRect.Width - Math.Min(cornerRadiusBottomLeft, borderRect.Width), cornerRadiusBottomRight);
+                    cornerH = Math.Min(borderRect.Height - Math.Min(cornerRadiusTopRight, borderRect.Height), cornerRadiusBottomRight);
+                    path.ArcTo(SKRect.Create(
+                        new SKPoint(
+                            borderRect.Left + borderRect.Width - cornerW * 2,
+                            borderRect.Top + borderRect.Height - cornerH * 2),
+                        new SKSize(cornerW * 2, cornerH * 2)),
+                        0, 90, false);
+                }
+                else
+                {
+                    path.LineTo(borderRect.Right, borderRect.Bottom);
+                }
+
+                if (cornerRadiusBottomLeft > 0)
+                {
+                    cornerW = Math.Min(borderRect.Width - Math.Min(cornerRadiusBottomRight, borderRect.Width), cornerRadiusBottomLeft);
+                    cornerH = Math.Min(borderRect.Height - Math.Min(cornerRadiusTopLeft, borderRect.Height), cornerRadiusBottomLeft);
+                    path.ArcTo(SKRect.Create(
+                        new SKPoint(borderRect.Left, borderRect.Top + borderRect.Height - cornerH * 2),
+                        new SKSize(cornerW * 2, cornerH * 2)),
+                        90, 90, false);
+                }
+                else
+                {
+                    path.LineTo(0, borderRect.Bottom);
+                }
+
+                path.Close();
+            }
+        }
+        else
+        {
+            path.AddRect(borderRect);
+        }
 
         if (backgroundColor != null &&
             targetRect != null &&
             !targetRect!.Value.Contains(borderRect))
         {
-            canvas.DrawPath(borderPath, new SKPaint
+            canvas.DrawPath(path, new SKPaint
             {
                 Style = SKPaintStyle.Fill,
                 Color = backgroundColor!.Value,
             });
         }
 
-        if (cornerRadius > 0 || targetRect != null)
+        if (hasRounded || targetRect != null)
         {
             canvas.Save();
-            canvas.ClipPath(borderPath);
+            canvas.ClipPath(path);
         }
 
         var destSize = (targetRect ?? borderRect).Size;
         var scaledBitmap = destSize.Width != bitmap.Width || destSize.Height != bitmap.Height
             ? bitmap.Resize(destSize, SKFilterQuality.High)
             : bitmap;
-
         canvas.DrawBitmap(scaledBitmap, targetRect ?? borderRect);
 
-        if (cornerRadius > 0 || targetRect != null)
+        if (hasRounded || targetRect != null)
         {
             canvas.Restore();
         }
 
         if (borderWidth > 0f && borderColor != null && borderColor.Value.Alpha > 0)
         {
-            canvas.DrawPath(borderPath, new SKPaint
+            canvas.DrawPath(path, new SKPaint
             {
                 Style = SKPaintStyle.Stroke,
                 Color = borderColor.Value,

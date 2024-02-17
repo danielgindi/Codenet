@@ -179,10 +179,10 @@ public static class ImageThumbnailUtil
                         finalSize.Width - halfBorderWidth - halfBorderWidth,
                         finalSize.Height - halfBorderWidth - halfBorderWidth
                     ),
-                    cornerRadiusTopLeft: cornerRadius,
-                    cornerRadiusTopRight: cornerRadius,
-                    cornerRadiusBottomRight: cornerRadius,
-                    cornerRadiusBottomLeft: cornerRadius,
+                    cornerRadiusTopLeft: (roundedCorners & Corner.TopLeft) != Corner.None ? cornerRadius : 0,
+                    cornerRadiusTopRight: (roundedCorners & Corner.TopRight) != Corner.None ? cornerRadius : 0,
+                    cornerRadiusBottomRight: (roundedCorners & Corner.BottomRight) != Corner.None ? cornerRadius : 0,
+                    cornerRadiusBottomLeft: (roundedCorners & Corner.BottomLeft) != Corner.None ? cornerRadius : 0,
                     borderWidth: borderWidth,
                     borderColor: borderColor,
                     backgroundColor: null,
@@ -207,6 +207,7 @@ public static class ImageThumbnailUtil
     /// <param name="destPath">Having the <paramref name="destPath"/> the same as <paramref name="sourcePath"/> may not be safe, especially for multi-frame sources where the source is streamed.</param>
     /// <param name="destinationFormat">Destination file format. null for original</param>
     /// <param name="encodingOptions"></param>
+    /// <param name="roundedCorners"></param>
     /// <param name="cornerRadius"></param>
     /// <param name="backgroundColor"></param>
     /// <param name="borderWidth"></param>
@@ -217,6 +218,7 @@ public static class ImageThumbnailUtil
         string destPath,
         ImageFormat? destinationFormat,
         ImageEncodingOptions? encodingOptions,
+        Corner roundedCorners,
         int cornerRadius,
         Color backgroundColor,
         float borderWidth,
@@ -272,10 +274,10 @@ public static class ImageThumbnailUtil
                         frame.Width - halfBorderWidth - halfBorderWidth,
                         frame.Height - halfBorderWidth - halfBorderWidth
                     ),
-                    cornerRadiusTopLeft: cornerRadius,
-                    cornerRadiusTopRight: cornerRadius,
-                    cornerRadiusBottomRight: cornerRadius,
-                    cornerRadiusBottomLeft: cornerRadius,
+                    cornerRadiusTopLeft: (roundedCorners & Corner.TopLeft) != Corner.None ? cornerRadius : 0,
+                    cornerRadiusTopRight: (roundedCorners & Corner.TopRight) != Corner.None ? cornerRadius : 0,
+                    cornerRadiusBottomRight: (roundedCorners & Corner.BottomRight) != Corner.None ? cornerRadius : 0,
+                    cornerRadiusBottomLeft: (roundedCorners & Corner.BottomLeft) != Corner.None ? cornerRadius : 0,
                     borderWidth: borderWidth,
                     borderColor: borderColor,
                     backgroundColor: null
@@ -340,9 +342,9 @@ public static class ImageThumbnailUtil
             }
             else
             {
-                path.AddLine(0, 0, 0, 1);
-                path.AddLine(0, 0, 1, 0);
+                path.AddLine(0, 0, 0, 0);
             }
+
             if (cornerRadiusTopRight > 0)
             {
                 cornerW = Math.Min(borderRect.Width - Math.Min(cornerRadiusTopLeft, borderRect.Width), cornerRadiusTopRight);
@@ -352,9 +354,9 @@ public static class ImageThumbnailUtil
             }
             else
             {
-                path.AddLine(borderRect.Right - 1, 0, borderRect.Right, 0);
-                path.AddLine(borderRect.Right, 0, borderRect.Right, 1);
+                path.AddLine(borderRect.Right, 0, borderRect.Right, 0);
             }
+
             if (cornerRadiusBottomRight > 0)
             {
                 cornerW = Math.Min(borderRect.Width - Math.Min(cornerRadiusBottomLeft, borderRect.Width), cornerRadiusBottomRight);
@@ -364,9 +366,9 @@ public static class ImageThumbnailUtil
             }
             else
             {
-                path.AddLine(borderRect.Right - 1, borderRect.Bottom, borderRect.Right, borderRect.Bottom);
-                path.AddLine(borderRect.Right, borderRect.Bottom - 1, borderRect.Right, borderRect.Bottom);
+                path.AddLine(borderRect.Right, borderRect.Bottom, borderRect.Right, borderRect.Bottom);
             }
+
             if (cornerRadiusBottomLeft > 0)
             {
                 cornerW = Math.Min(borderRect.Width - Math.Min(cornerRadiusBottomRight, borderRect.Width), cornerRadiusBottomLeft);
@@ -376,9 +378,9 @@ public static class ImageThumbnailUtil
             }
             else
             {
-                path.AddLine(0, borderRect.Bottom, 1, borderRect.Bottom);
-                path.AddLine(0, borderRect.Bottom - 1, 0, borderRect.Bottom);
+                path.AddLine(0, borderRect.Bottom, 0, borderRect.Bottom);
             }
+
             path.CloseFigure();
 
             if (backgroundColor != null &&

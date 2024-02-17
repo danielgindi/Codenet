@@ -122,6 +122,7 @@ public static partial class ImagingUtility
                 UseLibJpeg = true,
                 UseTempFile = true
             }, 
+            roundedCorners: Corner.AllCorners,
             cornerRadius: cornerRadius,
             backgroundColor: backgroundColor,
             borderWidth: borderWidth,
