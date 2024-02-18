@@ -90,7 +90,8 @@ public static class ImageSaveUtil
         else
         {
             using var stream = File.Create(destPath);
-            imageData.Encode(imageFormat, (int)(100 * encodingOptions.Quality)).SaveTo(stream);
+            if (!imageData.Encode(stream, imageFormat, (int)(100 * encodingOptions.Quality)))
+                throw new System.Exception($"Failed to encode image to {imageFormat}.");
         }
     }
 
