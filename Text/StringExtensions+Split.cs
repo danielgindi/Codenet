@@ -86,6 +86,22 @@ public static partial class StringExtensions
         return lst.ToArray();
     }
 
+    public static UInt64[] SplitToUInt64(this string value, params char[] delimiters)
+    {
+        if (value.Length == 0) return new UInt64[] { };
+
+        var lst = new List<UInt64>();
+        var strs = value.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+        foreach (string str in strs)
+        {
+            if (UInt64.TryParse(str, out var i))
+            {
+                lst.Add(i);
+            }
+        }
+        return lst.ToArray();
+    }
+
     /// <summary>
     /// Split a string, and give also an array of the whitespace that was stripped
     /// </summary>
