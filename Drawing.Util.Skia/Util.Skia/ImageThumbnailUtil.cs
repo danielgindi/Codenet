@@ -10,6 +10,8 @@ namespace Codenet.Drawing.Util.Skia;
 
 public static class ImageThumbnailUtil
 {
+    private static SKSamplingOptions DefaultSamplingOptions = new SKSamplingOptions(SKCubicResampler.Mitchell);
+
     public static bool MakeThumbnail(
         string sourcePath,
         string destPath,
@@ -420,7 +422,7 @@ public static class ImageThumbnailUtil
 
         var destSize = (targetRect ?? borderRect).Size;
         var scaledBitmap = destSize.Width != bitmap.Width || destSize.Height != bitmap.Height
-            ? bitmap.Resize(destSize, SKFilterQuality.High)
+            ? bitmap.Resize(destSize, DefaultSamplingOptions)
             : bitmap;
         canvas.DrawBitmap(scaledBitmap, targetRect ?? borderRect);
 
