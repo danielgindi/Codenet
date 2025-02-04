@@ -52,6 +52,7 @@ public static class XmlSerializerHelper
     /// </summary>
     /// <param name="xml">The XML.</param>
     /// <param name="typeName">Name of the type.</param>
+    /// <param name="isStrict">Strictly match the serialized data. Otherwise, we'll try to strip versioning and try again.</param>
     /// <returns></returns>
     public static object DeserializeObject(string xml, string typeName, bool isStrict)
     {
