@@ -76,263 +76,269 @@ public static class ImageFrameProcessingUtil
             encodingOptions.Quality = 1.0f;
         }
 
-        using var codec = SKCodec.Create(sourceStream);
-
+        var codec = SKCodec.Create(new MissingEOIJpegStream(sourceStream));
         if (codec == null)
             return false;
 
-        var sourceFormat = codec.EncodedFormat;
-        destinationFormat ??= sourceFormat;
-
-        string? tempFilePath = encodingOptions.UseTempFile ? FileHelper.CreateEmptyTempFile() : null;
-
         try
         {
-            if (sourceFormat == SKEncodedImageFormat.Gif &&
-                destinationFormat == SKEncodedImageFormat.Gif &&
-                !encodingOptions.ConvertToSingleFrame)
+            var sourceFormat = codec.EncodedFormat;
+            destinationFormat ??= sourceFormat;
+
+            string? tempFilePath = encodingOptions.UseTempFile ? FileHelper.CreateEmptyTempFile() : null;
+
+            try
             {
-                GifEncoder gifEncoder = new GifEncoder();
-                try
+                if (sourceFormat == SKEncodedImageFormat.Gif &&
+                    destinationFormat == SKEncodedImageFormat.Gif &&
+                    !encodingOptions.ConvertToSingleFrame)
                 {
-                    gifEncoder.Start(tempFilePath ?? destPath);
-                }
-                catch (Exception ex)
-                {
-                    Trace.TraceError(@"ImageFrameProcessingUtil.ProcessMultiframeImage - Error: {0}", ex.ToString());
-                    return false;
-                }
-
-                Action<SKBitmap, int> addFrame = (input, duration) =>
-                {
-                    BaseColorQuantizer? quantizer = null;
-                    if (encodingOptions.QuantizerSupplier != null)
+                    GifEncoder gifEncoder = new GifEncoder();
+                    try
                     {
-                        quantizer = encodingOptions.QuantizerSupplier(input);
+                        gifEncoder.Start(tempFilePath ?? destPath);
                     }
-                    if (quantizer == null)
+                    catch (Exception ex)
                     {
-                        quantizer = new WuColorQuantizer();
+                        Trace.TraceError(@"ImageFrameProcessingUtil.ProcessMultiframeImage - Error: {0}", ex.ToString());
+                        return false;
                     }
 
-                    using var inputBuffer = SkiaImageBuffer.FromBitmap(input, false, false);
-                    var targetPixelFormat = PixelFormatUtility.GetFormatByColorCount(255);
-                    using var quantizedBuffer = ImageBuffer.Allocate(input.Width, input.Height, targetPixelFormat);
-                    inputBuffer.Quantize(quantizedBuffer, quantizer, 255, 4);
-
-                    var transparentColor = NeatColor.FromARGB(0x00FFFFFFu);
-                    var transparentIndex = quantizer.GetPaletteIndex(transparentColor, 0, 0);
-                    if (transparentIndex != -1)
+                    Action<SKBitmap, int> addFrame = (input, duration) =>
                     {
-                        transparentColor = quantizedBuffer.Palette[transparentIndex];
-                    }
-
-                    gifEncoder.SetNextFrameDuration(duration);
-                    gifEncoder.SetNextFrameTransparentColor(Color.FromArgb(unchecked((int)transparentColor.ARGB)));
-                    gifEncoder.AddFrame(quantizedBuffer);
-                };
-
-                gifEncoder.SetSize(codec.Info.Width, codec.Info.Height);
-                gifEncoder.SetRepeat(codec.RepetitionCount == -1 ? 0 : codec.RepetitionCount);
-
-                int frameCount = codec.FrameCount;
-                var frameInfos = codec.FrameInfo;
-
-                var imageInfo = new SKImageInfo(codec.Info.Width, codec.Info.Height, SKImageInfo.PlatformColorType, SKAlphaType.Premul);
-
-                var cache = new Dictionary<int, SKBitmap>();
-                SKBitmap? reusableBmp = null;
-
-                try
-                {
-                    var requiredSet = new HashSet<int>();
-                    for (var i = 0; i < frameCount; i++)
-                    {
-                        if (frameInfos[i].RequiredFrame != -1)
-                            requiredSet.Add(frameInfos[i].RequiredFrame);
-                    }
-
-                    for (var frameIndex = 0; frameIndex < frameCount; frameIndex++)
-                    {
-                        var frameInfo = frameInfos[frameIndex];
-                        var decodeInfo = imageInfo;
-                        if (frameIndex > 0)
-                            decodeInfo = imageInfo.WithAlphaType(frameInfo.AlphaType);
-
-                        if (reusableBmp != null && reusableBmp.ByteCount != decodeInfo.BytesSize)
+                        BaseColorQuantizer? quantizer = null;
+                        if (encodingOptions.QuantizerSupplier != null)
                         {
-                            reusableBmp.Dispose();
-                            reusableBmp = null;
+                            quantizer = encodingOptions.QuantizerSupplier(input);
+                        }
+                        if (quantizer == null)
+                        {
+                            quantizer = new WuColorQuantizer();
                         }
 
-                        SKBitmap? bmp = reusableBmp;
-                        bool success = false;
+                        using var inputBuffer = SkiaImageBuffer.FromBitmap(input, false, false);
+                        var targetPixelFormat = PixelFormatUtility.GetFormatByColorCount(255);
+                        using var quantizedBuffer = ImageBuffer.Allocate(input.Width, input.Height, targetPixelFormat);
+                        inputBuffer.Quantize(quantizedBuffer, quantizer, 255, 4);
 
-                        try
+                        var transparentColor = NeatColor.FromARGB(0x00FFFFFFu);
+                        var transparentIndex = quantizer.GetPaletteIndex(transparentColor, 0, 0);
+                        if (transparentIndex != -1)
                         {
-                            if (bmp == null)
+                            transparentColor = quantizedBuffer.Palette[transparentIndex];
+                        }
+
+                        gifEncoder.SetNextFrameDuration(duration);
+                        gifEncoder.SetNextFrameTransparentColor(Color.FromArgb(unchecked((int)transparentColor.ARGB)));
+                        gifEncoder.AddFrame(quantizedBuffer);
+                    };
+
+                    gifEncoder.SetSize(codec.Info.Width, codec.Info.Height);
+                    gifEncoder.SetRepeat(codec.RepetitionCount == -1 ? 0 : codec.RepetitionCount);
+
+                    int frameCount = codec.FrameCount;
+                    var frameInfos = codec.FrameInfo;
+
+                    var imageInfo = new SKImageInfo(codec.Info.Width, codec.Info.Height, SKImageInfo.PlatformColorType, SKAlphaType.Premul);
+
+                    var cache = new Dictionary<int, SKBitmap>();
+                    SKBitmap? reusableBmp = null;
+
+                    try
+                    {
+                        var requiredSet = new HashSet<int>();
+                        for (var i = 0; i < frameCount; i++)
+                        {
+                            if (frameInfos[i].RequiredFrame != -1)
+                                requiredSet.Add(frameInfos[i].RequiredFrame);
+                        }
+
+                        for (var frameIndex = 0; frameIndex < frameCount; frameIndex++)
+                        {
+                            var frameInfo = frameInfos[frameIndex];
+                            var decodeInfo = imageInfo;
+                            if (frameIndex > 0)
+                                decodeInfo = imageInfo.WithAlphaType(frameInfo.AlphaType);
+
+                            if (reusableBmp != null && reusableBmp.ByteCount != decodeInfo.BytesSize)
                             {
-                                bmp = new SKBitmap();
-                                if (!bmp.TryAllocPixels(decodeInfo))
+                                reusableBmp.Dispose();
+                                reusableBmp = null;
+                            }
+
+                            SKBitmap? bmp = reusableBmp;
+                            bool success = false;
+
+                            try
+                            {
+                                if (bmp == null)
+                                {
+                                    bmp = new SKBitmap();
+                                    if (!bmp.TryAllocPixels(decodeInfo))
+                                    {
+                                        bmp.Dispose();
+                                        break;
+                                    }
+                                }
+
+                                var opts = new SKCodecOptions(frameIndex);
+
+                                if (frameInfo.RequiredFrame > -1 && cache.TryGetValue(frameInfo.RequiredFrame, out var requiredBmp))
+                                {
+                                    requiredBmp.CopyTo(bmp);
+                                    opts.PriorFrame = frameInfo.RequiredFrame;
+                                }
+                                else
+                                {
+                                    bmp.Erase(SKColor.Empty);
+                                }
+
+                                var result = codec.GetPixels(decodeInfo, bmp.GetPixels(), opts);
+                                if (result != SKCodecResult.Success && result != SKCodecResult.IncompleteInput)
                                 {
                                     bmp.Dispose();
                                     break;
                                 }
-                            }
 
-                            var opts = new SKCodecOptions(frameIndex);
+                                if (requiredSet.Contains(frameIndex))
+                                    cache[frameIndex] = bmp;
+                                else
+                                    reusableBmp = bmp;
 
-                            if (frameInfo.RequiredFrame > -1 && cache.TryGetValue(frameInfo.RequiredFrame, out var requiredBmp))
-                            {
-                                requiredBmp.CopyTo(bmp);
-                                opts.PriorFrame = frameInfo.RequiredFrame;
-                            }
-                            else
-                            {
-                                bmp.Erase(SKColor.Empty);
-                            }
-
-                            var result = codec.GetPixels(decodeInfo, bmp.GetPixels(), opts);
-                            if (result != SKCodecResult.Success && result != SKCodecResult.IncompleteInput)
-                            {
-                                bmp.Dispose();
-                                break;
-                            }
-
-                            if (requiredSet.Contains(frameIndex))
-                                cache[frameIndex] = bmp;
-                            else
-                                reusableBmp = bmp;
-
-                            if (processor != null)
-                            {
-                                var output = processor(bmp, destinationFormat.Value);
-                                try
+                                if (processor != null)
                                 {
-
-                                    if (output != null)
+                                    var output = processor(bmp, destinationFormat.Value);
+                                    try
                                     {
-                                        if (frameIndex == 0)
-                                            gifEncoder.SetSize(output.Width, output.Height);
 
-                                        addFrame(output, frameInfo.Duration);
+                                        if (output != null)
+                                        {
+                                            if (frameIndex == 0)
+                                                gifEncoder.SetSize(output.Width, output.Height);
+
+                                            addFrame(output, frameInfo.Duration);
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        if (output != null && output != bmp)
+                                            output.Dispose();
                                     }
                                 }
-                                finally
+                                else
                                 {
-                                    if (output != null && output != bmp)
-                                        output.Dispose();
+                                    addFrame(bmp, frameInfo.Duration);
                                 }
+
+                                success = true;
                             }
-                            else
+                            finally
                             {
-                                addFrame(bmp, frameInfo.Duration);
+                                if (!success && bmp != null && bmp != reusableBmp)
+                                    bmp.Dispose();
                             }
-
-                            success = true;
-                        }
-                        finally
-                        {
-                            if (!success && bmp != null && bmp != reusableBmp)
-                                bmp.Dispose();
                         }
                     }
-                }
-                finally
-                {
-                    foreach (var bmp in cache.Values)
-                        bmp.Dispose();
+                    finally
+                    {
+                        foreach (var bmp in cache.Values)
+                            bmp.Dispose();
 
-                    reusableBmp?.Dispose();
-                }
+                        reusableBmp?.Dispose();
+                    }
 
-                try
-                {
-                    gifEncoder.Finish();
+                    try
+                    {
+                        gifEncoder.Finish();
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.TraceError(@"ImageFrameProcessingUtil.ProcessMultiframeImage - Error: {0}", ex.ToString());
+                        return false;
+                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Trace.TraceError(@"ImageFrameProcessingUtil.ProcessMultiframeImage - Error: {0}", ex.ToString());
-                    return false;
+                    var bitmapInfo = codec.Info;
+
+                    if (bitmapInfo.AlphaType != SKAlphaType.Premul)
+                        bitmapInfo.AlphaType = SKAlphaType.Premul;
+
+                    SKBitmap? sourceBitmap = new SKBitmap(bitmapInfo);
+
+                    try
+                    {
+                        var result = codec.GetPixels(bitmapInfo, sourceBitmap.GetPixels(out var length));
+                        if (result != SKCodecResult.Success && result != SKCodecResult.IncompleteInput)
+                        {
+                            return false;
+                        }
+
+                        Action<SKBitmap> addFrame = (output) =>
+                        {
+                            ImageSaveUtil.SaveImage(
+                                imageData: output,
+                                destPath: tempFilePath ?? destPath,
+                                imageFormat: destinationFormat.Value,
+                                encodingOptions: encodingOptions);
+                        };
+
+                        if (processor != null)
+                        {
+                            var output = processor(sourceBitmap, destinationFormat.Value);
+                            try
+                            {
+                                if (output != null)
+                                    addFrame(output);
+                                else
+                                    return false;
+                            }
+                            finally
+                            {
+                                if (output != null && output != sourceBitmap)
+                                    output.Dispose();
+                            }
+                        }
+                        else
+                        {
+                            addFrame(sourceBitmap);
+                        }
+                    }
+                    finally
+                    {
+                        sourceBitmap.Dispose();
+                        sourceBitmap = null;
+                    }
                 }
             }
-            else
+            catch
             {
-                var bitmapInfo = codec.Info;
-
-                if (bitmapInfo.AlphaType != SKAlphaType.Premul)
-                    bitmapInfo.AlphaType = SKAlphaType.Premul;
-
-                var sourceBitmap = new SKBitmap(bitmapInfo);
-                var result = codec.GetPixels(bitmapInfo, sourceBitmap.GetPixels(out var length));
-                if (result != SKCodecResult.Success && result != SKCodecResult.IncompleteInput)
+                if (tempFilePath != null)
                 {
-                    sourceBitmap.Dispose();
-                    sourceBitmap = null;
-                    return false;
+                    File.Delete(tempFilePath);
                 }
 
-                Action<SKBitmap> addFrame = (output) =>
-                {
-                    ImageSaveUtil.SaveImage(
-                        imageData: output,
-                        destPath: tempFilePath ?? destPath,
-                        imageFormat: destinationFormat.Value,
-                        encodingOptions: encodingOptions);
-                };
-
-                try
-                {
-                    if (processor != null)
-                    {
-                        var output = processor(sourceBitmap, destinationFormat.Value);
-                        try
-                        {
-                            if (output != null)
-                                addFrame(output);
-                            else
-                                return false;
-                        }
-                        finally
-                        {
-                            if (output != null && output != sourceBitmap)
-                                output.Dispose();
-                        }
-                    }
-                    else
-                    {
-                        addFrame(sourceBitmap);
-                    }
-                }
-                finally
-                {
-                    sourceBitmap.Dispose(); 
-                }
+                throw;
             }
-        }
-        catch
-        {
+
             if (tempFilePath != null)
             {
-                File.Delete(tempFilePath);
+                try
+                {
+                    if (File.Exists(destPath))
+                        File.Delete(destPath);
+                    File.Move(tempFilePath, destPath);
+                    FileHelper.ResetFilePermissionsToInherited(destPath);
+                }
+                finally
+                {
+                    File.Delete(tempFilePath);
+                }
             }
-
-            throw;
         }
-
-        if (tempFilePath != null)
+        finally
         {
-            try
-            {
-                if (File.Exists(destPath))
-                    File.Delete(destPath);
-                File.Move(tempFilePath, destPath);
-                FileHelper.ResetFilePermissionsToInherited(destPath);
-            }
-            finally
-            {
-                File.Delete(tempFilePath);
-            }
+            codec?.Dispose();
         }
 
         return true;
