@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 
@@ -159,12 +160,15 @@ public static class FileHelper
     /// <param name="filePath">Path to the target file</param>
     public static void ResetFilePermissionsToInherited(string filePath)
     {
-        FileSecurity fileSecurity = new FileSecurity(filePath, AccessControlSections.Access | AccessControlSections.Owner | AccessControlSections.Group);
-        fileSecurity.SetAccessRuleProtection(false, true);
-        foreach (FileSystemAccessRule rule in fileSecurity.GetAccessRules(true, false, typeof(System.Security.Principal.NTAccount)))
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            fileSecurity.RemoveAccessRule(rule);
+            FileSecurity fileSecurity = new FileSecurity(filePath, AccessControlSections.Access | AccessControlSections.Owner | AccessControlSections.Group);
+            fileSecurity.SetAccessRuleProtection(false, true);
+            foreach (FileSystemAccessRule rule in fileSecurity.GetAccessRules(true, false, typeof(System.Security.Principal.NTAccount)))
+            {
+                fileSecurity.RemoveAccessRule(rule);
+            }
+            new FileInfo(filePath).SetAccessControl(fileSecurity);
         }
-        new FileInfo(filePath).SetAccessControl(fileSecurity);
     }
 }
