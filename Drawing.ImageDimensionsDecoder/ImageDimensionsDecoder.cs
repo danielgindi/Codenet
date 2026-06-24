@@ -38,7 +38,7 @@ public static class ImageDimensionsDecoder
         }
         else if (buffer[0] != 0x4D && buffer[1] != 0x4D) return null;
 
-        using (var reader = new AnyEndianReader(stream))
+        using (var reader = new AnyEndianReader(stream, true))
         {
             reader.LittleEndian = littleEndian;
 
@@ -64,7 +64,8 @@ public static class ImageDimensionsDecoder
                 {
                     tag = (ExifPropertyTag)reader.ReadUInt16();
                     tagType = reader.ReadUInt16();
-                    /*tagLength*/_ = reader.ReadUInt32();
+                    /*tagLength*/
+                    _ = reader.ReadUInt32();
 
                     if (tag == ExifPropertyTag.PropertyTagOrientation ||
                         tag == ExifPropertyTag.PropertyTagExifPixXDim ||
@@ -153,51 +154,57 @@ public static class ImageDimensionsDecoder
     private static ImageSize? GetImageSize_JPEG(FileStream stream)
     {
         byte[] buffer = new byte[4];
+        ImageSize? exifSize = null;
+        Size? originalSize = null;
 
         while (stream.Read(buffer, 0, 2) == 2 && buffer[0] == 0xFF &&
             ((buffer[1] >= 0xE0 && buffer[1] <= 0xEF) ||
             buffer[1] == 0xDB ||
+            buffer[1] == 0xDD ||
             buffer[1] == 0xC4 || buffer[1] == 0xC2 ||
             buffer[1] == 0xC0))
         {
             if (buffer[1] == 0xE1)
-            { // Parse APP1 EXIF
+            { // APP1 / EXIF — orientation only; size comes from SOF
+                Int64 segmentStart = stream.Position;   // right after the FF E1 marker bytes
 
                 // Marker segment length
                 if (stream.Read(buffer, 0, 2) != 2) return null;
-                // int blockLength = ((buffer[0] << 8) | buffer[1]) - 2;
+                Int64 segmentLength = (buffer[0] << 8) | buffer[1];   // includes the 2 length bytes themselves
 
-                // Exif
-                if (stream.Read(buffer, 0, 4) != 4
-                    || !CompareBytes(buffer, JPEG_EXIF_HEADER, 4)) return null;
+                // "Exif\0\0"
+                if (stream.Read(buffer, 0, 4) == 4
+                    && CompareBytes(buffer, JPEG_EXIF_HEADER, 4))
+                {
+                    // Byte-alignment marker
+                    if (stream.Read(buffer, 0, 2) != 2 ||
+                        buffer[0] != 0x00 || buffer[1] != 0x00) return null;
 
-                // Read Byte alignment offset
-                if (stream.Read(buffer, 0, 2) != 2 ||
-                    buffer[0] != 0x00 || buffer[1] != 0x00) return null;
+                    exifSize = GetImageSize_EXIF(stream) ?? exifSize;
+                }
 
-                var size = GetImageSize_EXIF(stream);
-                if (size != null)
-                    return size;
+                // Whatever the EXIF parser left us sitting on, jump to the end of the APP1 segment
+                // so the outer loop sees the next real JPEG marker.
+                // We entered the segment at (current - 4) for "Exif\0\0", then -2 for the 00 00,
+                // so the segment start is at stream.Position - 4 - 4 - 2 = stream.Position - 10
+                // from inside this branch. But simpler: rewind to right after the length field.
+                stream.Seek(segmentStart + segmentLength, SeekOrigin.Begin);
             }
             else if (buffer[1] == 0xC0 || buffer[1] == 0xC2)
-            { // Parse SOF0 (Start of Frame, Baseline DCT or Progressive DCT)
+            { // SOF0 / SOF2 — read the actual JPEG dimensions
 
-                // Skip LF, P
+                // Skip Lf (precision), P (number of components)
                 stream.Seek(3, SeekOrigin.Current);
 
-                // Read Y,X
+                // Height, Width (big-endian)
                 if (stream.Read(buffer, 0, 4) != 4) return null;
 
-                var originalSize = new Size(buffer[2] << 8 | buffer[3], buffer[0] << 8 | buffer[1]);
-
-                return new ImageSize
-                {
-                    RawSize = originalSize,
-                    ExifOrientation = 1
-                };
+                originalSize = new Size(
+                    buffer[2] << 8 | buffer[3],   // width
+                    buffer[0] << 8 | buffer[1]);  // height
             }
             else
-            { // Skip APPn segment
+            { // Skip APPn / DQT / DHT seg
                 if (stream.Read(buffer, 0, 2) == 2)
                 { // Marker segment length
                     stream.Seek((int)((buffer[0] << 8) | buffer[1]) - 2, SeekOrigin.Current);
@@ -209,7 +216,16 @@ public static class ImageDimensionsDecoder
             }
         }
 
-        return null;
+        if (originalSize.HasValue)
+        {
+            return new ImageSize
+            {
+                RawSize = originalSize.Value,
+                ExifOrientation = exifSize?.ExifOrientation ?? 1,
+            };
+        }
+
+        return exifSize;
     }
 
     #region ICNS Definitions
@@ -428,7 +444,7 @@ public static class ImageDimensionsDecoder
                         originalSize.Height = (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
                         success = true;
                     }
-                        
+
                     if (success)
                         return new ImageSize { RawSize = originalSize };
                 }
